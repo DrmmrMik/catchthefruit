@@ -69,11 +69,20 @@ export const DEFAULT_UNLOCKED_LEVELS: Record<string, boolean> = {
   'math_1': true
 };
 
+export const PlacedDecorationsSchema = z.object({
+  outside: z.record(z.string(), z.string()).default({}),
+  inside: z.record(z.string(), z.string()).default({})
+});
+export type PlacedDecorations = z.infer<typeof PlacedDecorationsSchema>;
+
 export const UserProgressSchema = z.object({
   version: z.number().int().default(1),
   unlockedLevels: z.record(z.string(), z.boolean()).default(DEFAULT_UNLOCKED_LEVELS),
   stars: z.record(z.string(), z.number()).default({}), // key: `${topic}_${levelNumber}` -> 1..3
   highScores: z.record(z.string(), z.number()).default({}), // key: `${topic}_${levelNumber}` -> score
+  coins: z.number().int().min(0).default(0),
+  inventory: z.array(z.string()).default([]),
+  placedDecorations: PlacedDecorationsSchema.default({ outside: {}, inside: {} }),
   errorStats: ErrorStatsSchema.default({
     patternErrors: {},
     wordErrors: {},

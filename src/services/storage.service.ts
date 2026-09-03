@@ -243,6 +243,110 @@ export class StorageService {
     return progress;
   }
 
+  // ==========================================================================
+  // MARKETPLACE & CASTLE DECORATION ENGINE
+  // ==========================================================================
+
+  /**
+   * Retrieves current Princess Coin balance
+   */
+  public async getCoins(): Promise<number> {
+    const progress = await this.getProgress();
+    return progress.coins ?? 0;
+  }
+
+  /**
+   * Awards coins for gameplay achievements
+   */
+  public async addCoins(amount: number): Promise<number> {
+    if (amount <= 0) return this.getCoins();
+    const progress = await this.getProgress();
+    progress.coins = (progress.coins ?? 0) + Math.floor(amount);
+    await this.saveProgress(progress);
+    return progress.coins;
+  }
+
+  /**
+   * Attempts to spend coins. Returns true if successful, false if insufficient balance.
+   */
+  public async spendCoins(amount: number): Promise<boolean> {
+    if (amount <= 0) return true;
+    const progress = await this.getProgress();
+    const current = progress.coins ?? 0;
+    if (current < amount) {
+      return false;
+    }
+    progress.coins = current - amount;
+    await this.saveProgress(progress);
+    return true;
+  }
+
+  /**
+   * Purchases a decoration from the Royal Marketplace.
+   * Checks balance, deducts price, and adds item to player inventory.
+   */
+  public async purchaseItem(itemId: string, price: number): Promise<boolean> {
+    const progress = await this.getProgress();
+    const inventory = progress.inventory ?? [];
+    if (inventory.includes(itemId)) {
+      return true; // Already owned
+    }
+
+    const currentCoins = progress.coins ?? 0;
+    if (currentCoins < price) {
+      return false; // Insufficient funds
+    }
+
+    progress.coins = currentCoins - price;
+    progress.inventory = [...inventory, itemId];
+    await this.saveProgress(progress);
+    return true;
+  }
+
+  /**
+   * Checks if player owns an item
+   */
+  public async isItemOwned(itemId: string): Promise<boolean> {
+    const progress = await this.getProgress();
+    return (progress.inventory ?? []).includes(itemId);
+  }
+
+  /**
+   * Returns list of owned item IDs
+   */
+  public async getInventory(): Promise<string[]> {
+    const progress = await this.getProgress();
+    return progress.inventory ?? [];
+  }
+
+  /**
+   * Places a decoration into an outside or inside slot
+   */
+  public async placeDecoration(location: 'outside' | 'inside', slotId: string, itemId: string): Promise<UserProgress> {
+    const progress = await this.getProgress();
+    if (!progress.placedDecorations) {
+      progress.placedDecorations = { outside: {}, inside: {} };
+    }
+    if (!progress.placedDecorations[location]) {
+      progress.placedDecorations[location] = {};
+    }
+    progress.placedDecorations[location][slotId] = itemId;
+    await this.saveProgress(progress);
+    return progress;
+  }
+
+  /**
+   * Removes a placed decoration from a slot
+   */
+  public async removeDecoration(location: 'outside' | 'inside', slotId: string): Promise<UserProgress> {
+    const progress = await this.getProgress();
+    if (progress.placedDecorations && progress.placedDecorations[location]) {
+      delete progress.placedDecorations[location][slotId];
+      await this.saveProgress(progress);
+    }
+    return progress;
+  }
+
   /**
    * Clears progress and resets to initial defaults
    */

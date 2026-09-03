@@ -365,7 +365,54 @@ def get_ui_sprites():
     return sprites
 
 # ------------------------------------------------------------------------------
-# 5. PACK ALL SPRITES INTO 1024x1024 ATLAS
+# 5. PROCESS CASTLE DECORATIONS & FURNITURE (AI RASTER)
+# ------------------------------------------------------------------------------
+def get_decorations_sprites():
+    sprites = {}
+    sheet_path = os.path.join(SRC_DIR, 'castle_decorations_sheet_1788453895482.jpg')
+    if not os.path.exists(sheet_path):
+        print(f"Warning: {sheet_path} not found, skipping decoration extraction")
+        return sprites
+
+    sheet_img = Image.open(sheet_path)
+    sheet_clean = extract_sprite_clean(sheet_img, thresh_dist=20, feather_radius=1.0)
+
+    items = {
+        'decor-fountain': (35, 33, 285, 324),
+        'decor-topiary': (342, 18, 480, 329),
+        'decor-banners': (507, 43, 828, 314),
+        'decor-lantern': (826, 28, 991, 319),
+        'decor-couch': (748, 335, 988, 501),
+        'decor-peacock': (23, 361, 267, 635),
+        'decor-swing': (269, 369, 529, 665),
+        'decor-throne': (557, 332, 709, 558),
+        'decor-chaise': (533, 554, 802, 745),
+        'decor-mirror': (822, 509, 993, 757),
+        'decor-teatable': (42, 764, 233, 967),
+        'decor-bookshelf': (294, 692, 514, 976),
+        'decor-chandelier': (575, 751, 743, 953),
+        'coin-gold': (799, 784, 982, 975)
+    }
+
+    for name, bbox in items.items():
+        crop = sheet_clean.crop(bbox)
+        cbbox = crop.getbbox()
+        if cbbox:
+            crop = crop.crop(cbbox)
+
+        target_size = 48 if name == 'coin-gold' else 96
+        cw, ch = crop.size
+        scale = min(target_size / cw, target_size / ch)
+        nw, nh = max(1, int(cw * scale)), max(1, int(ch * scale))
+        resized = crop.resize((nw, nh), Image.Resampling.LANCZOS)
+        canvas = Image.new('RGBA', (target_size, target_size), (0, 0, 0, 0))
+        canvas.paste(resized, ((target_size - nw) // 2, (target_size - nh) // 2))
+        sprites[name] = canvas
+
+    return sprites
+
+# ------------------------------------------------------------------------------
+# 6. PACK ALL SPRITES INTO 1024x1024 ATLAS
 # ------------------------------------------------------------------------------
 def pack_atlas(output_dir="public/assets"):
     os.makedirs(output_dir, exist_ok=True)
@@ -379,6 +426,9 @@ def pack_atlas(output_dir="public/assets"):
 
     print("Processing AI Tree & Basket (clean floodfill)...")
     all_sprites.update(get_tree_and_basket_sprites())
+
+    print("Processing Castle Decorations & Furniture...")
+    all_sprites.update(get_decorations_sprites())
 
     print("Processing UI elements...")
     all_sprites.update(get_ui_sprites())

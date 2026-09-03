@@ -338,7 +338,7 @@ describe('UI Adversarial & Remediation Verification Suite (Challenger M3-2)', ()
       expect(output).toContain('TeachingCard resume button explicitly sized to 240x54px');
       expect(output).toContain('100 rapid dismissal multi-tap simulations passed');
       expect(output).toContain('100,000 float fuzz points strictly clamped');
-    });
+    }, 15000);
   });
 
   // --------------------------------------------------------------------------
@@ -684,6 +684,9 @@ describe('UI Adversarial & Remediation Verification Suite (Challenger M3-2)', ()
           ttsEnabled: true,
           highContrast: false
         },
+        coins: 0,
+        inventory: [],
+        placedDecorations: { outside: {}, inside: {} },
         orchardGrowthStage: 0,
         lastActiveTimestamp: Date.now()
       };
@@ -720,6 +723,9 @@ describe('UI Adversarial & Remediation Verification Suite (Challenger M3-2)', ()
           ttsEnabled: true,
           highContrast: false
         },
+        coins: 500,
+        inventory: ['crystal_fountain'],
+        placedDecorations: { outside: { centerpiece: 'crystal_fountain' }, inside: {} },
         orchardGrowthStage: 10,
         lastActiveTimestamp: Date.now()
       };

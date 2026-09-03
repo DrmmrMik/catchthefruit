@@ -23,12 +23,14 @@ export { MenuScene } from './scenes/MenuScene';
 export { GameScene } from './scenes/GameScene';
 export { RoundSummaryScene } from './scenes/RoundSummaryScene';
 export { OrchardScene } from './scenes/OrchardScene';
+export { CastleScene } from './scenes/CastleScene';
 
 import { PreloadScene } from './scenes/PreloadScene';
 import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { RoundSummaryScene } from './scenes/RoundSummaryScene';
 import { OrchardScene } from './scenes/OrchardScene';
+import { CastleScene } from './scenes/CastleScene';
 
 // Runtime configuration validation using Zod
 export const GameConfigSchema = z.object({
@@ -60,7 +62,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
       fps: 60
     }
   },
-  scene: [PreloadScene, MenuScene, GameScene, RoundSummaryScene, OrchardScene]
+  scene: [PreloadScene, MenuScene, GameScene, RoundSummaryScene, OrchardScene, CastleScene]
 };
 
 /**

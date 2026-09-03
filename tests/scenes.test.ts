@@ -7,19 +7,21 @@ import {
   GameScene,
   RoundSummaryScene,
   OrchardScene,
+  CastleScene,
   CatchTheFruitGame
 } from '../src/main';
 
 describe('Phaser 4 Scenes Architecture', () => {
-  it('registers all 5 required gameplay scenes in gameConfig', () => {
+  it('registers all required gameplay scenes in gameConfig', () => {
     expect(gameConfig.scene).toBeDefined();
     const scenes = gameConfig.scene as Array<unknown>;
-    expect(scenes).toHaveLength(5);
+    expect(scenes).toHaveLength(6);
     expect(scenes).toContain(PreloadScene);
     expect(scenes).toContain(MenuScene);
     expect(scenes).toContain(GameScene);
     expect(scenes).toContain(RoundSummaryScene);
     expect(scenes).toContain(OrchardScene);
+    expect(scenes).toContain(CastleScene);
   });
 
   it('configures fixed-timestep Arcade Physics to prevent 120Hz desynchronization', () => {

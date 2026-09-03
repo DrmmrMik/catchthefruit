@@ -71,16 +71,50 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Orchard View button (top left, 48px target)
-    const orchardBtn = this.add.container(48, 40);
+    const orchardBtn = this.add.container(36, 40);
     const orchardIcon = this.add.image(0, 0, 'atlas', 'tree-stage-3');
-    orchardIcon.setDisplaySize(40, 40);
+    orchardIcon.setDisplaySize(38, 38);
     orchardBtn.add(orchardIcon);
-    orchardBtn.setSize(48, 48);
+    orchardBtn.setSize(44, 44);
     orchardBtn.setInteractive({ useHandCursor: true });
     orchardBtn.on('pointerdown', () => {
       audioService.playClick();
       this.scene.start('OrchardScene', { returnTo: 'MenuScene' });
     });
+
+    // Castle & Marketplace button (top bar)
+    const castleBtn = this.add.container(96, 40);
+    const castleBg = this.add.graphics();
+    castleBg.fillStyle(0xd946ef, 1);
+    castleBg.fillRoundedRect(-34, -16, 68, 32, 16);
+    const castleLabel = this.add.text(0, 0, '🏰 Shop', {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '12px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    castleBtn.add([castleBg, castleLabel]);
+    castleBtn.setSize(68, 32);
+    castleBtn.setInteractive({ useHandCursor: true });
+    castleBtn.on('pointerdown', () => {
+      audioService.playClick();
+      this.scene.start('CastleScene', { returnTo: 'MenuScene' });
+    });
+
+    // Coin Badge
+    const coinBadge = this.add.container(width - 110, 40);
+    const cbg = this.add.graphics();
+    cbg.fillStyle(0x0f172a, 0.4);
+    cbg.fillRoundedRect(-36, -16, 72, 32, 16);
+    const cIcon = this.add.image(-18, 0, 'atlas', 'coin-gold').setDisplaySize(20, 20);
+    const cTxt = this.add.text(-4, 0, '0', {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '13px',
+      color: '#facc15',
+      fontStyle: 'bold'
+    }).setOrigin(0, 0.5);
+    coinBadge.add([cbg, cIcon, cTxt]);
+    storageService.getCoins().then(c => cTxt.setText(`${c}`));
 
     // Topic Selection Tabs (Horizontal row of 4 pills)
     this.createTopicTabs();

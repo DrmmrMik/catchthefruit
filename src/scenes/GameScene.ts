@@ -40,6 +40,7 @@ export class GameScene extends Phaser.Scene {
   private isPaused: boolean = false;
   private isRemediating: boolean = false;
   private fallDurationMs: number = 5200;
+  private roundCoinsEarned: number = 0;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -384,6 +385,12 @@ export class GameScene extends Phaser.Scene {
     const points = 100 * Math.min(this.combo, 5);
     this.score += points;
 
+    // Award Princess Coins for correct answer (+10 base + combo bonus)
+    const coinGain = 10 + Math.min(this.combo * 2, 20);
+    this.roundCoinsEarned += coinGain;
+    await storageService.addCoins(coinGain);
+    this.showCoinFloatingText(fruit.container.x, fruit.container.y, `+${coinGain} 🪙`);
+
     // Record correct catch & reset consecutive mistakes
     await storageService.recordCorrect(this.topic, fruit.question.subTopic, fruit.option.text);
 
@@ -545,6 +552,26 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private showCoinFloatingText(x: number, y: number, text: string): void {
+    const coinText = this.add.text(x, y - 20, text, {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '16px',
+      color: '#facc15',
+      fontStyle: 'bold',
+      stroke: '#78350f',
+      strokeThickness: 3
+    }).setOrigin(0.5).setDepth(60);
+
+    this.tweens.add({
+      targets: coinText,
+      y: y - 55,
+      alpha: 0,
+      duration: 650,
+      ease: 'Quad.easeOut',
+      onComplete: () => coinText.destroy()
+    });
+  }
+
   private triggerPrincessCelebration(): void {
     if (!this.princess || !this.princess.active) return;
 
@@ -649,6 +676,14 @@ export class GameScene extends Phaser.Scene {
     const stars = result.stars;
     const isMastered = accuracy >= 85 || result.unlockedNextLevel;
 
+    // Bonus coins for round completion, mastery, and 3-stars
+    let bonusCoins = 50;
+    if (isMastered) bonusCoins += 100;
+    if (stars === 3) bonusCoins += 50;
+    await storageService.addCoins(bonusCoins);
+
+    const totalRoundCoins = this.roundCoinsEarned + bonusCoins;
+
     audioService.playLevelComplete();
 
     this.scene.start('RoundSummaryScene', {
@@ -657,7 +692,8 @@ export class GameScene extends Phaser.Scene {
       score: this.score,
       accuracy: Math.round(accuracy),
       stars,
-      isMastered
+      isMastered,
+      coinsEarned: totalRoundCoins
     });
   }
 }

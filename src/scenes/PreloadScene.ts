@@ -52,9 +52,11 @@ export class PreloadScene extends Phaser.Scene {
       loadingText.setText('Tap Anywhere to Enter Kingdom!');
     });
 
-    // Load packed texture atlas and magical background image
+    // Load packed texture atlas and magical background images
     this.load.atlas('atlas', 'assets/atlas.png', 'assets/atlas.json');
     this.load.image('background', 'assets/background.jpg');
+    this.load.image('castle-exterior', 'assets/castle_exterior.jpg');
+    this.load.image('castle-interior', 'assets/castle_interior.jpg');
   }
 
   create(): void {
