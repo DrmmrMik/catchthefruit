@@ -1,0 +1,102 @@
+=================================================================
+  CHALLENGER M2-2 EMPIRICAL PERSISTENCE & PROGRESSION ORACLE     
+=================================================================
+
+--- TEST 1: SOURCE CODE INVARIANT & OPERATOR AUDITING ---
+  [PASS] Mastery check enforces strict > 0.85: 'norm > 0.85' in storage.service.ts
+  [PASS] Mastery check enforces attemptsCount >= 10: 'attemptsCount >= 10' in storage.service.ts
+  [PASS] Star calculation enforces exact boundaries (>= 1.0 -> 3, >= 0.90 -> 2, >= 0.85 -> 1, else 0)
+  [PASS] Remediation trigger enforces 'consecutiveMistakes >= 3'
+  [PASS] Correct answer strictly resets streak: 'stats.consecutiveMistakes = 0'
+  [PASS] Explicit reset available: 'resetConsecutiveMistakes()'
+  [PASS] Stars retained monotonically: 'if (stars > currentStars)'
+  [PASS] High score retained monotonically: 'if (score > currentHighScore)'
+  [PASS] Initial level 1 unlocked for: phonics_1
+  [PASS] Initial level 1 unlocked for: morphology_1
+  [PASS] Initial level 1 unlocked for: vocabulary_1
+  [PASS] Initial level 1 unlocked for: math_1
+
+--- TEST 2: MATHEMATICAL BOUNDARY ORACLE & FUZZING ---
+Critical Boundary Checks:
+  [PASS] 84.9% (0.849 float) with 10 attempts -> 0 stars, mastery=false
+  [PASS] 84.9% (84.9 pct) with 10 attempts -> 0 stars, mastery=false
+  [PASS] 84.9999% with 10 attempts -> 0 stars, mastery=false
+  [PASS] 85.0% (0.850 float) with 10 attempts -> 1 star, mastery=false (STRICT REQUIREMENT: > 0.85)
+  [PASS] 85.0% (85.0 pct) with 10 attempts -> 1 star, mastery=false (STRICT REQUIREMENT: > 0.85)
+  [PASS] 85.0001% with 10 attempts -> 1 star, mastery=true (UNLOCKS NEXT LEVEL)
+  [PASS] 85.1% (0.851 float) with 10 attempts -> 1 star, mastery=true (UNLOCKS NEXT LEVEL)
+  [PASS] 85.1% (85.1 pct) with 10 attempts -> 1 star, mastery=true (UNLOCKS NEXT LEVEL)
+  [PASS] 89.9% (0.899 float) with 10 attempts -> 1 star, mastery=true
+  [PASS] 89.9% (89.9 pct) with 10 attempts -> 1 star, mastery=true
+  [PASS] 89.9999% with 10 attempts -> 1 star, mastery=true
+  [PASS] 90.0% (0.900 float) with 10 attempts -> 2 stars, mastery=true
+  [PASS] 90.0% (90.0 pct) with 10 attempts -> 2 stars, mastery=true
+  [PASS] 90.0001% with 10 attempts -> 2 stars, mastery=true
+  [PASS] 95.0% with 10 attempts -> 2 stars, mastery=true
+  [PASS] 99.9% (0.999 float) with 10 attempts -> 2 stars, mastery=true
+  [PASS] 99.9% (99.9 pct) with 10 attempts -> 2 stars, mastery=true
+  [PASS] 99.9999% with 10 attempts -> 2 stars, mastery=true
+  [PASS] 100.0% (1.000 float) with 10 attempts -> 3 stars, mastery=true
+  [PASS] 100.0% (100.0 pct) with 10 attempts -> 3 stars, mastery=true
+  [PASS] 100% with 9 attempts -> 3 stars, mastery=false (STRICT REQUIREMENT: >= 10 attempts)
+  [PASS] 100.0 pct with 9 attempts -> 3 stars, mastery=false (STRICT REQUIREMENT: >= 10 attempts)
+  [PASS] 100% with 8 attempts -> 3 stars, mastery=false
+  [PASS] 100% with 0 attempts -> 3 stars, mastery=false
+  [PASS] 85.0% with 9 attempts -> 1 star, mastery=false
+  [PASS] 90.0% with 9 attempts -> 2 stars, mastery=false
+  [PASS] 8/10 items (80.0%) -> 0 stars, mastery=false
+  [PASS] 9/10 items (90.0%) -> 2 stars, mastery=true (UNLOCKS NEXT LEVEL)
+  [PASS] 10/10 items (100.0%) -> 3 stars, mastery=true (UNLOCKS NEXT LEVEL)
+  [PASS] 17/20 items (85.0%) -> 1 star, mastery=false (STRICT REQUIREMENT: > 0.85)
+  [PASS] 18/20 items (90.0%) -> 2 stars, mastery=true (UNLOCKS NEXT LEVEL)
+  [PASS] Property test: 2000 precision float points in [-0.1, 1.1] verified 4 disjoint monotonic star zones.
+  [PASS] Property test: Attempts [0..25] x Accuracy [0.80..0.90] verified mastery invariant.
+
+--- TEST 3: VITEST TEST SUITE EXECUTION ---
+Command: npx vitest run tests/storage.test.ts tests/progression.test.ts
+Output:
+ RUN  v4.1.11 /home/gallabot/Documents/antigravity/joyful-hertz
+ ✓ tests/storage.test.ts (18 tests)
+ ✓ tests/progression.test.ts (24 tests)
+ Test Files  2 passed (2)
+      Tests  42 passed (42)
+  [PASS] Vitest completed successfully: 42/42 tests passed (100%)
+
+--- TEST 4: CONSECUTIVE MISTAKES & REMEDIATION ORACLE ---
+  [PASS] Initial consecutiveMistakes = 0, shouldTriggerRemediation = false
+  [PASS] Mistake 1 -> consecutiveMistakes = 1, shouldTriggerRemediation = false
+  [PASS] Mistake 2 -> consecutiveMistakes = 2, shouldTriggerRemediation = false
+  [PASS] Mistake 3 -> consecutiveMistakes = 3, shouldTriggerRemediation = true (TRIGGER ACTIVE)
+  [PASS] Mistake 4 -> consecutiveMistakes = 4, shouldTriggerRemediation = true (MAINTAINS REMEDIATION)
+  [PASS] Correct catch -> consecutiveMistakes = 0 (IMMEDIATE RESET)
+  [PASS] Subsequent Mistake -> consecutiveMistakes = 1, shouldTriggerRemediation = false
+  [PASS] resetConsecutiveMistakes() -> consecutiveMistakes = 0 (EXPLICIT RESET)
+  [PASS] Interleaved mistake patterns (M, M, C, M, M, C, M, M, M) trigger strictly on 3rd sequential mistake
+  [PASS] Cumulative statistics (patternErrors, wordErrors, totalAttempts, totalCorrect) remain monotonic
+
+--- TEST 5: SCHEMA RESILIENCE & MIGRATION VERIFICATION ---
+  [PASS] Schema default for 'sfxVolume': 0.8
+  [PASS] Schema default for 'musicVolume': 0.5
+  [PASS] Schema default for 'ttsEnabled': true
+  [PASS] Schema default for 'highContrast': false
+  [PASS] Schema default for 'totalAttempts': 0
+  [PASS] Schema default for 'totalCorrect': 0
+  [PASS] Schema default for 'consecutiveMistakes': 0
+  [PASS] Schema default for 'orchardGrowthStage': 0
+  [PASS] Legacy payload missing errorStats/settings parsed with safe defaults
+  [PASS] Unknown extra fields safely stripped by UserProgressSchema
+  [PASS] Monotonic star retention: 3 stars preserved when subsequent run earns 1 star
+  [PASS] Monotonic high score retention: 1000 preserved when subsequent run scores 300
+  [PASS] Monotonic unlock retention: unlocked level 2 never re-locks on failed replay
+  [PASS] Orchard growth stage capped at 10 and prevents duplicate increment on replayed mastery
+
+--- ADVERSARIAL FINDING / NUANCE NOTED ---
+  [INFO] Float precision danger zone: norm = accuracy > 1 ? accuracy / 100 : accuracy.
+  Values in (1.0, 85.0) are normalized by dividing by 100. For example, 1 + Number.EPSILON
+  evaluates as > 1 and is divided by 100, yielding ~0.0100 (0 stars).
+  All game calls should pass either floating point ratios in [0.0, 1.0] or integer percentages [0, 100].
+
+=================================================================
+  VERIFICATION COMPLETE: 0 error(s), 0 warning(s)
+  VERDICT: APPROVE
+=================================================================

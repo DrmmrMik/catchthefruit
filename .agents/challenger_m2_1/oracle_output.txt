@@ -1,0 +1,53 @@
+================================================================
+   ADVERSARIAL VERIFICATION ORACLE: MILESTONE 2 CURRICULUM
+================================================================
+
+--- TEST 1: REPOSITORY DATA SYNCHRONIZATION (data/ vs public/data/) ---
+  [PASS] phonics.json: data/ and public/data/ are byte-identical (26188 bytes).
+  [PASS] morphology.json: data/ and public/data/ are byte-identical (21129 bytes).
+  [PASS] vocabulary.json: data/ and public/data/ are byte-identical (18109 bytes).
+  [PASS] math.json: data/ and public/data/ are byte-identical (13825 bytes).
+
+--- TEST 2: GLOBAL & TOPIC ID UNIQUENESS AUDIT ---
+  [PASS] Topic 'phonics' has 5 sequentially numbered levels (1..5).
+  [PASS] Topic 'phonics' has 66 unique item IDs.
+  [PASS] Topic 'morphology' has 5 sequentially numbered levels (1..5).
+  [PASS] Topic 'morphology' has 50 unique item IDs.
+  [PASS] Topic 'vocabulary' has 5 sequentially numbered levels (1..5).
+  [PASS] Topic 'vocabulary' has 44 unique item IDs.
+  [PASS] Topic 'math' has 5 sequentially numbered levels (1..5).
+  [PASS] Topic 'math' has 40 unique item IDs.
+  [PASS] Global Item ID total: 200 unique items across all topics.
+
+--- TEST 3: ADVERSARIAL DISTRACTOR INTEGRITY & CONTAMINATION AUDIT ---
+  [PASS] Phonics: All 66 items have >=2 unique distractors with zero target collisions.
+  [PASS] Morphology: All 50 items have >=2 unique distractors with zero target collisions.
+  [PASS] Vocabulary: All 44 items have >=2 unique distractors with zero target collisions.
+  [PASS] Math: All 40 items have >=2 unique distractor results with zero target collisions.
+
+--- TEST 4: PEDAGOGICAL CURRICULUM CONFORMANCE ---
+  [PASS] Phonics item count: 66 (exceeds >= 40 required).
+  [PASS] All 9 vowel teams present (including ea split into long/short).
+  [PASS] All 5 r-controlled vowels present.
+  [PASS] ea split verified: 6 /ē/ words, 6 /ĕ/ words.
+  [PASS] Benchmark exemplars 'beach' (/ē/) and 'bread' (/ĕ/) present.
+  [PASS] Morphology distinct base words: 49 (exceeds >= 30 required).
+  [PASS] All 12 required prefixes and suffixes present.
+  [PASS] All morphology visualSegmentation strings match format '^.+ \+ .+ → .+$' and contain combinedWord.
+  [PASS] Vocabulary item count: 44 (exceeds >= 40 required).
+  [PASS] Vocabulary balance: 22 synonyms, 22 antonyms.
+  [PASS] All vocabulary items contextualized in rich sentences.
+  [PASS] All math items are mathematically accurate within PPS Grade 2 bounds.
+
+--- TEST 5: FRUIT TYPES & LEVEL SCAFFOLDING VERIFICATION ---
+  [PASS] Every item across all 4 topics references a valid FruitType from the 12 atlas sprites.
+  [PASS] All topic levels have monotonically decreasing fallSpeedDurationMs (scaffolded speed) and 0.85 mastery threshold.
+
+================================================================
+                       ORACLE SUMMARY
+================================================================
+Total Warnings: 0
+Total Errors:   0
+
+VERDICT: APPROVE
+All adversarial checks passed cleanly.

@@ -1,0 +1,64 @@
+=================================================================
+  CHALLENGER M3-2 EMPIRICAL UI & REMEDIATION ADVERSARIAL ORACLE
+=================================================================
+
+--- TEST 1: SOURCE CODE INVARIANT & UI CONTRACT AUDITING ---
+  [PASS] TeachingCard resume button explicitly sized to 240x54px (>= 48px)
+  [PASS] TeachingCard resume button background geometry matches 240x54px container size
+  [PASS] TeachingCard listen button explicitly sized to 150x48px (>= 48px)
+  [PASS] TeachingCard dismiss() features synchronous isDismissed re-entrance guard
+  [PASS] TeachingCard dismiss() invokes storage.resetConsecutiveMistakes()
+  [PASS] HUD pause and sound buttons explicitly set to 64x64px (>= 48px)
+  [PASS] OrchardView level cards sized to 430x72px (>= 48px)
+  [PASS] TeachingCard uses Lexend font family
+  [PASS] HUD uses Lexend font family
+  [PASS] OrchardView uses Lexend font family
+
+--- TEST 2: WCAG AAA COLOR CONTRAST RATIO AUDIT ---
+  [AAA PASS] TeachingCard Explanation Text (#0f172a on #ffffff, 18px normal): 17.85:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AAA PASS] TeachingCard Listen Button Text (#334155 on #f1f5f9, 16px normal): 9.45:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AAA PASS] TeachingCard Target Word Text (#0369a1 on #f0f9ff, 28px large): 5.57:1 (Req: AAA 4.5:1, AA 3.0:1)
+  [AA PASS] TeachingCard Segmentation Text (#92400e on #fef3c7, 20px normal): 6.37:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [BELOW AA] TeachingCard Header Title Text (#ffffff on #0284c7, 22px normal): 4.10:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [BELOW AA] TeachingCard Resume Button Text (#ffffff on #16a34a, 19px normal): 3.30:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AAA PASS] HUD Prompt Text (#0c4a6e on #ffffff, 19px normal): 9.46:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AAA PASS] HUD Score Counter (#0f172a on #ffffff, 24px large): 17.85:1 (Req: AAA 4.5:1, AA 3.0:1)
+  [AA PASS] HUD Prompt Subtext (#0369a1 on #ffffff, 14px normal): 5.93:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AA PASS] HUD Combo Indicator (#b45309 on #ffffff, 14px normal): 5.02:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AAA PASS] OrchardView Unlocked Card Subtitle (#475569 on #ffffff, 13px normal): 7.58:1 (Req: AAA 7.0:1, AA 4.5:1)
+  [AAA PASS] OrchardView Orchard Title Header (#065f46 on #ffffff, 24px large): 7.68:1 (Req: AAA 4.5:1, AA 3.0:1)
+  [AA PASS] OrchardView Unlocked Card Title (#0369a1 on #ffffff, 18px normal): 5.93:1 (Req: AAA 7.0:1, AA 4.5:1)
+
+--- TEST 3: RAPID DISMISSAL & CONCURRENCY STRESS ORACLE ---
+  [PASS] 100 rapid dismissal multi-tap simulations passed (strictly 1 execution per lifecycle)
+
+--- TEST 4: ORCHARD TREE STAGE BOUNDARY & CLAMPING ORACLE ---
+  [PASS] Negative extreme: growthStage=-100 -> stage 1 ('tree-stage-1')
+  [PASS] Negative boundary: growthStage=-1 -> stage 1 ('tree-stage-1')
+  [PASS] 0 levels unlocked (Initial): growthStage=0 -> stage 1 ('tree-stage-1')
+  [PASS] 1 level unlocked: growthStage=1 -> stage 2 ('tree-stage-2')
+  [PASS] 2 levels unlocked: growthStage=2 -> stage 2 ('tree-stage-2')
+  [PASS] 3 levels unlocked: growthStage=3 -> stage 3 ('tree-stage-3')
+  [PASS] 4 levels unlocked: growthStage=4 -> stage 3 ('tree-stage-3')
+  [PASS] 5 levels unlocked: growthStage=5 -> stage 4 ('tree-stage-4')
+  [PASS] 6 levels unlocked: growthStage=6 -> stage 4 ('tree-stage-4')
+  [PASS] 7 levels unlocked: growthStage=7 -> stage 5 ('tree-stage-5')
+  [PASS] 10 levels completed (storage cap): growthStage=10 -> stage 5 ('tree-stage-5')
+  [PASS] 20 levels completed (all topics complete): growthStage=20 -> stage 5 ('tree-stage-5')
+  [PASS] Positive extreme: growthStage=1000 -> stage 5 ('tree-stage-5')
+  [PASS] 100,000 float fuzz points strictly clamped to stages 1..5 and valid frames
+
+--- TEST 5: VITEST TEST SUITE EXECUTION ---
+RUN  v4.1.11 /home/gallabot/Documents/antigravity/joyful-hertz
+
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  08:12:54
+   Duration  3.93s (transform 2.28s, setup 23ms, import 3.39s, tests 43ms, environment 332ms)
+  [PASS] Vitest completed successfully: 19/19 tests passed (100%)
+
+=================================================================
+  VERIFICATION COMPLETE: 0 error(s), 6 warning(s)
+  VERDICT: APPROVE
+=================================================================

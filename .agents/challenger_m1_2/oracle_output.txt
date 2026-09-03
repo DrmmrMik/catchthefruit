@@ -1,0 +1,86 @@
+=================================================================
+  CHALLENGER M1-2 EMPIRICAL ADVERSARIAL VERIFICATION HARNESS
+=================================================================
+
+--- TEST 1: MASKABLE ICON MARGIN OPACITY VIA PIL ---
+Inspecting public/icons/maskable-192x192.png: dimensions=192x192, mode=RGBA
+  Margin depth: 16px (8.33% of width)
+  Margin pixels inspected: 11264 / 36864 (30.56%)
+  Minimum margin alpha: 252
+  Non-255 margin pixels: 97
+  Margin pixels with alpha < 10: 0
+  Overall minimum alpha: 34
+  [WARN] public/icons/maskable-192x192.png margin has 97 pixels with alpha < 255 (min alpha: 252)
+Inspecting public/icons/maskable-512x512.png: dimensions=512x512, mode=RGBA
+  Margin depth: 41px (8.01% of width)
+  Margin pixels inspected: 77244 / 262144 (29.47%)
+  Minimum margin alpha: 255
+  Non-255 margin pixels: 0
+  Margin pixels with alpha < 10: 0
+  Overall minimum alpha: 33
+  [PASS] public/icons/maskable-512x512.png outer 8% margin is 100% full-bleed opaque (alpha=255 for all 77244 pixels)
+Inspecting dist/icons/maskable-192x192.png: dimensions=192x192, mode=RGBA
+  Margin depth: 16px (8.33% of width)
+  Margin pixels inspected: 11264 / 36864 (30.56%)
+  Minimum margin alpha: 252
+  Non-255 margin pixels: 97
+  Margin pixels with alpha < 10: 0
+  Overall minimum alpha: 34
+  [WARN] dist/icons/maskable-192x192.png margin has 97 pixels with alpha < 255 (min alpha: 252)
+Inspecting dist/icons/maskable-512x512.png: dimensions=512x512, mode=RGBA
+  Margin depth: 41px (8.01% of width)
+  Margin pixels inspected: 77244 / 262144 (29.47%)
+  Minimum margin alpha: 255
+  Non-255 margin pixels: 0
+  Margin pixels with alpha < 10: 0
+  Overall minimum alpha: 33
+  [PASS] dist/icons/maskable-512x512.png outer 8% margin is 100% full-bleed opaque (alpha=255 for all 77244 pixels)
+
+--- TEST 2: TEXTURE ATLAS BOUNDING BOXES & TOUCH TARGETS ---
+Actual atlas.png dimensions: 1024x512, mode=RGBA
+atlas.json meta.size: 1024x512
+Total frame entries in atlas.json: 29
+Checking 12 curriculum fruits...
+  Fruit 'apple': 80x80px (>= 48px requirement satisfied)
+  Fruit 'orange': 80x80px (>= 48px requirement satisfied)
+  Fruit 'grape': 80x80px (>= 48px requirement satisfied)
+  Fruit 'banana': 80x80px (>= 48px requirement satisfied)
+  Fruit 'watermelon': 80x80px (>= 48px requirement satisfied)
+  Fruit 'blueberry': 80x80px (>= 48px requirement satisfied)
+  Fruit 'strawberry': 80x80px (>= 48px requirement satisfied)
+  Fruit 'lemon': 80x80px (>= 48px requirement satisfied)
+  Fruit 'kiwi': 80x80px (>= 48px requirement satisfied)
+  Fruit 'peach': 80x80px (>= 48px requirement satisfied)
+  Fruit 'plum': 80x80px (>= 48px requirement satisfied)
+  Fruit 'cherry': 80x80px (>= 48px requirement satisfied)
+Checking bounding box pairwise non-overlap across all frames...
+  [PASS] Zero bounding box overlaps found across all 29 frames! Minimum gutter: 4px
+
+--- TEST 3: SERVICE WORKER & PRECACHE VERIFICATION ---
+Checking for forbidden cache.addAll( calls in sw.js...
+  [PASS] No 'cache.addAll(' found in sw.js.
+Verifying precached assets exist in dist/ directory...
+Found 7 asset references in sw.js: ['./icons/icon-192x192.png', './icons/icon-512x512.png', './icons/maskable-192x192.png', './icons/maskable-512x512.png', './index.html', './manifest.json', './screenshots/mobile-1.png']
+  Asset './icons/icon-512x512.png' verified in dist/ (63596 bytes)
+  Asset './icons/icon-192x192.png' verified in dist/ (28435 bytes)
+  Asset './index.html' verified in dist/ (3800 bytes)
+  Asset './screenshots/mobile-1.png' verified in dist/ (19308 bytes)
+  Asset './manifest.json' verified in dist/ (1343 bytes)
+  Asset './icons/maskable-192x192.png' verified in dist/ (28473 bytes)
+  Asset './icons/maskable-512x512.png' verified in dist/ (64072 bytes)
+  [PASS] All 7 precache asset paths physically exist in dist/!
+
+--- TEST 4: MANIFEST & DIST ARTIFACT INTEGRITY ---
+  Manifest icon 'icons/icon-192x192.png' exists (28435 bytes)
+  Manifest icon 'icons/icon-512x512.png' exists (63596 bytes)
+  Manifest icon 'icons/maskable-192x192.png' exists (28473 bytes)
+  Manifest icon 'icons/maskable-512x512.png' exists (64072 bytes)
+  Manifest screenshot 'screenshots/mobile-1.png' exists (19308 bytes)
+
+=================================================================
+  VERIFICATION SUMMARY
+=================================================================
+Total Errors: 0
+Total Warnings: 2
+
+VERDICT: APPROVE
