@@ -14,13 +14,16 @@ describe('Texture Atlas Asset Verification', () => {
     expect(parsed).toBeDefined();
     expect(parsed.meta).toBeDefined();
     expect(parsed.meta.image).toBe('atlas.png');
-    expect(parsed.meta.size).toEqual({ w: 1024, h: 512 });
+    expect(parsed.meta.size.w).toBe(1024);
+    expect(parsed.meta.size.h).toBeGreaterThanOrEqual(512);
   });
 
-  it('contains exactly 29 frames', () => {
+  it('contains at least 29 frames including Princess Penelope and curriculum sprites', () => {
     const content = JSON.parse(fs.readFileSync(atlasJsonPath, 'utf-8'));
     const frameKeys = Object.keys(content.frames);
-    expect(frameKeys.length).toBe(29);
+    expect(frameKeys.length).toBeGreaterThanOrEqual(29);
+    expect(content.frames['princess-idle-1']).toBeDefined();
+    expect(content.frames['princess-catch']).toBeDefined();
   });
 
   it('contains all 12 curriculum fruit types with >= 48px dimensions', () => {

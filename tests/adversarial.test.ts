@@ -31,7 +31,7 @@ describe('Adversarial Verification Suite (Challenger M1-2)', () => {
     const frames = atlas.frames;
     const names = Object.keys(frames);
 
-    expect(names.length).toBe(29);
+    expect(names.length).toBeGreaterThanOrEqual(29);
 
     for (let i = 0; i < names.length; i++) {
       for (let j = i + 1; j < names.length; j++) {

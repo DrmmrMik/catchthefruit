@@ -14,7 +14,7 @@ export class PreloadScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     // Loading title
-    this.add.text(width / 2, height / 2 - 80, '🍎 Catch the Fruit! 🍊', {
+    this.add.text(width / 2, height / 2 - 80, '👑 Princess Penelope 🍎', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '28px',
       color: '#0f172a',
@@ -22,9 +22,9 @@ export class PreloadScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Subtitle
-    this.add.text(width / 2, height / 2 - 40, 'Pittsburgh Public Schools 2nd Grade ELA', {
+    this.add.text(width / 2, height / 2 - 40, 'Catch the Fruit • Princesses Wear Pants World', {
       fontFamily: 'Lexend, sans-serif',
-      fontSize: '16px',
+      fontSize: '15px',
       color: '#475569'
     }).setOrigin(0.5);
 
@@ -42,18 +42,19 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     // Loading status text
-    const loadingText = this.add.text(width / 2, height / 2 + 45, 'Loading Orchard Assets...', {
+    const loadingText = this.add.text(width / 2, height / 2 + 45, 'Loading Royal Orchard...', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
       color: '#64748b'
     }).setOrigin(0.5);
 
     this.load.on('complete', () => {
-      loadingText.setText('Tap Anywhere to Start!');
+      loadingText.setText('Tap Anywhere to Enter Kingdom!');
     });
 
-    // Load packed texture atlas with all 29 sprites
+    // Load packed texture atlas and magical background image
     this.load.atlas('atlas', 'assets/atlas.png', 'assets/atlas.json');
+    this.load.image('background', 'assets/background.jpg');
   }
 
   create(): void {

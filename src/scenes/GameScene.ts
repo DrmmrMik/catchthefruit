@@ -28,6 +28,7 @@ export class GameScene extends Phaser.Scene {
 
   private hud!: HUD;
   private basket!: Phaser.GameObjects.Image;
+  private princess!: Phaser.GameObjects.Sprite;
   private questions: CurriculumItem[] = [];
   private currentQuestionIndex: number = 0;
   private activeFruits: ActiveFruit[] = [];
@@ -61,14 +62,22 @@ export class GameScene extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Background sky with light ground grass
-    this.cameras.main.setBackgroundColor('#e0f2fe');
+    // Magical Royal Orchard Background Image (if loaded) or daylight fallback
+    if (this.textures.exists('background')) {
+      const bg = this.add.image(width / 2, height / 2, 'background');
+      bg.setDisplaySize(width, height);
+      bg.setDepth(0);
+    } else {
+      this.cameras.main.setBackgroundColor('#e0f2fe');
+      const grass = this.add.graphics();
+      grass.fillStyle(0x86efac, 1);
+      grass.fillRect(0, height - 90, width, 90);
+      grass.fillStyle(0x4ade80, 1);
+      grass.fillRect(0, height - 90, width, 8);
+    }
 
-    const grass = this.add.graphics();
-    grass.fillStyle(0x86efac, 1);
-    grass.fillRect(0, height - 90, width, 90);
-    grass.fillStyle(0x4ade80, 1);
-    grass.fillRect(0, height - 90, width, 8);
+    // Cozy atmospheric drifting cherry blossom petals and glowing fireflies
+    this.createCozyAtmosphere(width, height);
 
     // Fixed-timestep Arcade Physics
     this.physics.world.fixedStep = true;
@@ -95,21 +104,34 @@ export class GameScene extends Phaser.Scene {
       audioService.speakPrompt(initialQuestion.spokenPrompt);
     }
 
-    // Interactive Basket at the bottom (x=width/2, y=height-50, touch draggable)
-    this.basket = this.add.image(width / 2, height - 55, 'atlas', 'basket');
+    // Princess Penelope Character Sprite standing on the orchard path (behind basket)
+    this.princess = this.add.sprite(width / 2, height - 72, 'atlas', 'princess-idle-1');
+    this.princess.setDisplaySize(80, 108);
+    this.princess.setDepth(50);
+    if (this.anims.exists('princess-idle')) {
+      this.princess.play('princess-idle');
+    }
+
+    // Interactive Royal Basket held by Princess Penelope (x=width/2, y=height-45, touch draggable)
+    this.basket = this.add.image(width / 2, height - 45, 'atlas', 'basket');
     this.basket.setDisplaySize(96, 56);
+    this.basket.setDepth(60);
     this.basket.setInteractive({ draggable: true });
 
     this.input.on('drag', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
       if (gameObject === this.basket && !this.isPaused && !this.isRemediating) {
-        this.basket.x = Phaser.Math.Clamp(dragX, 55, width - 55);
+        const clampedX = Phaser.Math.Clamp(dragX, 55, width - 55);
+        this.basket.x = clampedX;
+        if (this.princess) this.princess.x = clampedX;
       }
     });
 
-    // Touch pointer drag across screen moves basket directly
+    // Touch pointer drag across screen moves basket and Princess directly
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown && pointer.y > height - 140 && !this.isPaused && !this.isRemediating) {
-        this.basket.x = Phaser.Math.Clamp(pointer.x, 55, width - 55);
+        const clampedX = Phaser.Math.Clamp(pointer.x, 55, width - 55);
+        this.basket.x = clampedX;
+        if (this.princess) this.princess.x = clampedX;
       }
     });
 
@@ -367,6 +389,9 @@ export class GameScene extends Phaser.Scene {
     if (explanation) {
       this.showFeedbackToast(explanation, '#10b981');
     }
+
+    // Princess Penelope celebrates with a victory hop and sparkle fountain
+    this.triggerPrincessCelebration();
   }
 
   private async handleIncorrectCatch(fruit: ActiveFruit): Promise<void> {
@@ -375,6 +400,16 @@ export class GameScene extends Phaser.Scene {
 
     // Soft miss audio
     audioService.playMiss();
+
+    // Princess Penelope thoughtful reaction
+    if (this.princess && this.princess.active) {
+      this.princess.setFrame('princess-think');
+      this.time.delayedCall(700, () => {
+        if (this.princess && this.princess.active && this.anims.exists('princess-idle')) {
+          this.princess.play('princess-idle');
+        }
+      });
+    }
 
     // Deduct points (clamped to 0)
     this.score = Math.max(0, this.score - 25);
@@ -486,6 +521,96 @@ export class GameScene extends Phaser.Scene {
       duration: 400,
       onComplete: () => toast.destroy()
     });
+  }
+
+  private triggerPrincessCelebration(): void {
+    if (!this.princess || !this.princess.active) return;
+
+    this.princess.stop();
+    this.princess.setFrame('princess-catch');
+
+    // Celebratory victory hop
+    const startY = this.cameras.main.height - 72;
+    this.tweens.add({
+      targets: this.princess,
+      y: startY - 22,
+      duration: 200,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        if (this.princess && this.princess.active) {
+          this.princess.y = startY;
+          if (this.anims.exists('princess-idle')) {
+            this.princess.play('princess-idle');
+          }
+        }
+      }
+    });
+
+    // Burst 3 golden sparkles around Penelope's head
+    for (let i = 0; i < 3; i++) {
+      const sp = this.add.image(
+        this.princess.x + Phaser.Math.Between(-30, 30),
+        this.princess.y - 45 + Phaser.Math.Between(-15, 15),
+        'atlas',
+        'sparkle'
+      ).setDepth(55).setScale(0.8);
+
+      this.tweens.add({
+        targets: sp,
+        y: sp.y - 25,
+        alpha: 0,
+        scale: 1.2,
+        duration: 500 + i * 100,
+        onComplete: () => sp.destroy()
+      });
+    }
+  }
+
+  private createCozyAtmosphere(width: number, height: number): void {
+    // Spawn floating cherry blossom petals & golden fireflies drifting across the orchard
+    const particleCount = 8;
+    for (let i = 0; i < particleCount; i++) {
+      const isPetal = i % 2 === 0;
+      const p = this.add.image(
+        Phaser.Math.Between(20, width - 20),
+        Phaser.Math.Between(40, height - 100),
+        'atlas',
+        isPetal ? 'petal' : 'firefly'
+      ).setDepth(20).setAlpha(Phaser.Math.FloatBetween(0.4, 0.75));
+
+      const baseSpeed = Phaser.Math.Between(25, 45);
+      const startX = p.x;
+
+      // Continuous gentle drift
+      this.tweens.add({
+        targets: p,
+        y: height + 20,
+        duration: ((height - p.y) / baseSpeed) * 1000,
+        ease: 'Linear',
+        onComplete: () => {
+          p.y = -20;
+          p.x = Phaser.Math.Between(20, width - 20);
+          this.tweens.add({
+            targets: p,
+            y: height + 20,
+            duration: (height / baseSpeed) * 1000,
+            repeat: -1,
+            ease: 'Linear'
+          });
+        }
+      });
+
+      // Gentle horizontal sway
+      this.tweens.add({
+        targets: p,
+        x: startX + Phaser.Math.Between(-25, 25),
+        duration: Phaser.Math.Between(1800, 3000),
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
   }
 
   private async finishLevel(): Promise<void> {

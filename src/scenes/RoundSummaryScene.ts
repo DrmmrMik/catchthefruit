@@ -53,10 +53,10 @@ export class RoundSummaryScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // 3 Stars display with staggered zoom animation
+    // 3 Crown Badges display with staggered zoom animation
     for (let s = 0; s < 3; s++) {
-      const starFrame = s < this.summaryData.stars ? 'star-full' : 'star-empty';
-      const star = this.add.image(width / 2 - 60 + s * 60, 235, 'atlas', starFrame);
+      const starFrame = s < this.summaryData.stars ? 'crown-star-full' : 'crown-star-empty';
+      const star = this.add.image(width / 2 - 60 + s * 60, 220, 'atlas', starFrame);
       star.setDisplaySize(48, 48);
       star.setScale(0);
 
@@ -66,6 +66,21 @@ export class RoundSummaryScene extends Phaser.Scene {
         delay: 200 + s * 250,
         duration: 400,
         ease: 'Back.easeOut'
+      });
+    }
+
+    // Princess Penelope sprite celebrating on the card
+    const princessPose = this.summaryData.isMastered ? 'princess-catch' : 'princess-idle-1';
+    const princess = this.add.image(width / 2, 290, 'atlas', princessPose);
+    princess.setDisplaySize(68, 90);
+    if (this.summaryData.isMastered) {
+      this.tweens.add({
+        targets: princess,
+        y: 280,
+        duration: 300,
+        yoyo: true,
+        repeat: 3,
+        ease: 'Quad.easeOut'
       });
     }
 

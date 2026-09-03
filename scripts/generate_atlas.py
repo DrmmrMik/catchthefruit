@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """
-scripts/generate_atlas.py - Catch the Fruit Procedural Sprite Generator & Atlas Packer
-Author: Explorer M1-3 / Worker M1-1
-
-Requires: Pillow >= 10.0.0
+scripts/generate_atlas.py - Princesses Wear Pants Magical World Sprite Generator & Atlas Packer
 Generates:
-  - public/assets/atlas.png (1024x512 RGBA)
-  - public/assets/atlas.json (Phaser 3/4 JSON Hash Format with 29 sprites)
+  - public/assets/atlas.png (1024x1024 RGBA)
+  - public/assets/atlas.json (Phaser 3/4 JSON Hash Format)
 """
 
 import os
 import json
 import math
+import random
 from PIL import Image, ImageDraw
 
 SCALE = 4
@@ -24,8 +22,181 @@ def finalize(img, w, h):
     """Downsamples supersampled image to target size using high-quality Lanczos."""
     return img.resize((w, h), Image.Resampling.LANCZOS)
 
+def draw_cute_face(d, cx, cy, s, eye_dist=8, eye_r=2.5, smile_w=5, blush=True):
+    """Draws a cozy, expressive storybook face with specular eye highlights and rosy cheeks."""
+    ed = eye_dist * s
+    er = eye_r * s
+    # Eyes
+    d.ellipse([cx - ed - er, cy - er, cx - ed + er, cy + er], fill=(30, 41, 59, 255))
+    d.ellipse([cx + ed - er, cy - er, cx + ed + er, cy + er], fill=(30, 41, 59, 255))
+    # Eye Highlights (Top-left shine)
+    hr = er * 0.45
+    d.ellipse([cx - ed - hr, cy - er*0.6, cx - ed + hr, cy - er*0.1], fill=(255, 255, 255, 255))
+    d.ellipse([cx + ed - hr, cy - er*0.6, cx + ed + hr, cy - er*0.1], fill=(255, 255, 255, 255))
+    # Rosy Cheeks
+    if blush:
+        br = 3.2 * s
+        d.ellipse([cx - ed - br*1.2, cy + 1.5*s, cx - ed + br*0.8, cy + 1.5*s + br], fill=(251, 113, 133, 160))
+        d.ellipse([cx + ed - br*0.8, cy + 1.5*s, cx + ed + br*1.2, cy + 1.5*s + br], fill=(251, 113, 133, 160))
+    # Gentle Smiling Mouth
+    sw = smile_w * s
+    d.arc([cx - sw, cy + 1*s, cx + sw, cy + 6*s], start=10, end=170, fill=(30, 41, 59, 255), width=int(1.8*s))
+
 # ==============================================================================
-# 12 FRUIT SPRITE GENERATORS (80x80 px)
+# PRINCESS PENELOPE SPRITES (96x128 px)
+# ==============================================================================
+
+def draw_princess(w=96, h=128, pose="idle1"):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+
+    cx = (w * s) / 2
+    ground_y = (h * s) - (10 * s)
+
+    bob_y = 0
+    arm_pose = "down"
+
+    if pose == "idle2":
+        bob_y = -3 * s
+    elif pose == "catch":
+        bob_y = -9 * s
+        arm_pose = "up"
+    elif pose == "think":
+        arm_pose = "think"
+
+    # 1. Shoes (Red Adventure Sneakers with White Caps)
+    shoe_l_x = cx - 18 * s
+    shoe_r_x = cx + 8 * s
+    shoe_y = ground_y + bob_y
+
+    if pose == "catch":
+        # Left shoe planted
+        d.rounded_rectangle([shoe_l_x, shoe_y - 8*s, shoe_l_x + 18*s, shoe_y + 2*s], radius=4*s, fill=(225, 29, 72, 255))
+        d.rounded_rectangle([shoe_l_x - 2*s, shoe_y, shoe_l_x + 20*s, shoe_y + 5*s], radius=2*s, fill=(255, 255, 255, 255))
+        # Right shoe kicked up in joy
+        r_sy = shoe_y - 12*s
+        d.rounded_rectangle([shoe_r_x + 4*s, r_sy - 8*s, shoe_r_x + 22*s, r_sy + 2*s], radius=4*s, fill=(225, 29, 72, 255))
+        d.rounded_rectangle([shoe_r_x + 2*s, r_sy, shoe_r_x + 24*s, r_sy + 5*s], radius=2*s, fill=(255, 255, 255, 255))
+    else:
+        # Left Shoe
+        d.rounded_rectangle([shoe_l_x, shoe_y - 8*s, shoe_l_x + 18*s, shoe_y + 2*s], radius=4*s, fill=(225, 29, 72, 255))
+        d.rounded_rectangle([shoe_l_x - 2*s, shoe_y, shoe_l_x + 20*s, shoe_y + 5*s], radius=2*s, fill=(255, 255, 255, 255))
+        d.ellipse([shoe_l_x + 4*s, shoe_y - 6*s, shoe_l_x + 8*s, shoe_y - 2*s], fill=(255, 255, 255, 220))
+
+        # Right Shoe
+        d.rounded_rectangle([shoe_r_x, shoe_y - 8*s, shoe_r_x + 18*s, shoe_y + 2*s], radius=4*s, fill=(225, 29, 72, 255))
+        d.rounded_rectangle([shoe_r_x - 2*s, shoe_y, shoe_r_x + 20*s, shoe_y + 5*s], radius=2*s, fill=(255, 255, 255, 255))
+        d.ellipse([shoe_r_x + 10*s, shoe_y - 6*s, shoe_r_x + 14*s, shoe_y - 2*s], fill=(255, 255, 255, 220))
+
+    # 2. Denim Dungarees / Overalls Legs
+    pant_y = ground_y - 34 * s + bob_y
+    # Left Leg
+    d.rounded_rectangle([cx - 19*s, pant_y, cx - 5*s, ground_y - 6*s + bob_y], radius=3*s, fill=(30, 64, 175, 255))
+    # Right Leg
+    r_leg_end = (ground_y - 14*s + bob_y) if pose == "catch" else (ground_y - 6*s + bob_y)
+    d.rounded_rectangle([cx + 5*s, pant_y, cx + 19*s, r_leg_end], radius=3*s, fill=(30, 64, 175, 255))
+    # Rolled-up cuffs
+    d.rounded_rectangle([cx - 20*s, ground_y - 9*s + bob_y, cx - 4*s, ground_y - 5*s + bob_y], radius=2*s, fill=(96, 165, 250, 255))
+    d.rounded_rectangle([cx + 4*s, r_leg_end - 3*s, cx + 20*s, r_leg_end + 1*s], radius=2*s, fill=(96, 165, 250, 255))
+
+    # 3. Torso: Cozy Striped Shirt Underneath
+    shirt_y = pant_y - 26 * s
+    d.rounded_rectangle([cx - 18*s, shirt_y, cx + 18*s, pant_y + 6*s], radius=6*s, fill=(255, 255, 255, 255))
+    for sy in range(int(shirt_y + 4*s), int(pant_y), int(6*s)):
+        d.rectangle([cx - 18*s, sy, cx + 18*s, sy + 3*s], fill=(244, 114, 182, 255))
+
+    # 4. Overalls Bib & Pocket
+    bib_w = 14 * s
+    bib_y = shirt_y + 8 * s
+    d.rounded_rectangle([cx - bib_w, bib_y, cx + bib_w, pant_y + 4*s], radius=4*s, fill=(29, 78, 216, 255))
+    # Straps
+    d.line([(cx - 12*s, shirt_y + 2*s), (cx - 10*s, bib_y + 4*s)], fill=(30, 58, 138, 255), width=5*s)
+    d.line([(cx + 12*s, shirt_y + 2*s), (cx + 10*s, bib_y + 4*s)], fill=(30, 58, 138, 255), width=5*s)
+    # Brass Buckles
+    d.ellipse([cx - 12*s, bib_y + 2*s, cx - 8*s, bib_y + 6*s], fill=(251, 191, 36, 255))
+    d.ellipse([cx + 8*s, bib_y + 2*s, cx + 12*s, bib_y + 6*s], fill=(251, 191, 36, 255))
+    # Utility Pocket with Golden Stitching
+    d.rounded_rectangle([cx - 8*s, bib_y + 10*s, cx + 8*s, bib_y + 22*s], radius=3*s, fill=(30, 64, 175, 255), outline=(251, 191, 36, 255), width=int(1.5*s))
+    d.ellipse([cx - 3*s, bib_y + 14*s, cx + 3*s, bib_y + 19*s], fill=(239, 68, 68, 255)) # Apple emblem
+
+    # 5. Back Curly Hair
+    head_y = shirt_y - 20 * s
+    d.ellipse([cx - 28*s, head_y - 12*s, cx - 10*s, head_y + 16*s], fill=(120, 53, 15, 255))
+    d.ellipse([cx + 10*s, head_y - 12*s, cx + 28*s, head_y + 16*s], fill=(120, 53, 15, 255))
+    d.ellipse([cx - 32*s, head_y - 4*s, cx - 14*s, head_y + 22*s], fill=(146, 64, 14, 255))
+    d.ellipse([cx + 14*s, head_y - 4*s, cx + 32*s, head_y + 22*s], fill=(146, 64, 14, 255))
+
+    # 6. Arms
+    skin_color = (254, 215, 170, 255)
+    if arm_pose == "up":
+        d.line([(cx - 16*s, shirt_y + 8*s), (cx - 26*s, shirt_y - 14*s)], fill=skin_color, width=6*s)
+        d.line([(cx + 16*s, shirt_y + 8*s), (cx + 26*s, shirt_y - 14*s)], fill=skin_color, width=6*s)
+        d.ellipse([cx - 30*s, shirt_y - 20*s, cx - 22*s, shirt_y - 12*s], fill=(251, 191, 36, 255))
+        d.ellipse([cx + 22*s, shirt_y - 20*s, cx + 30*s, shirt_y - 12*s], fill=(251, 191, 36, 255))
+    elif arm_pose == "think":
+        d.line([(cx - 16*s, shirt_y + 8*s), (cx - 24*s, shirt_y + 20*s)], fill=skin_color, width=6*s)
+        d.line([(cx + 16*s, shirt_y + 8*s), (cx + 14*s, head_y + 6*s)], fill=skin_color, width=6*s)
+        d.ellipse([cx + 10*s, head_y + 4*s, cx + 18*s, head_y + 12*s], fill=skin_color)
+    else:
+        d.line([(cx - 16*s, shirt_y + 8*s), (cx - 22*s, shirt_y + 24*s)], fill=skin_color, width=6*s)
+        d.line([(cx + 16*s, shirt_y + 8*s), (cx + 22*s, shirt_y + 24*s)], fill=skin_color, width=6*s)
+        # Small basket in hands
+        bw = 14 * s
+        by = shirt_y + 22 * s
+        d.rounded_rectangle([cx - bw, by, cx + bw, by + 16*s], radius=4*s, fill=(217, 119, 6, 255), outline=(251, 191, 36, 255), width=2*s)
+        d.ellipse([cx - 4*s, by - 4*s, cx + 4*s, by + 4*s], fill=(239, 68, 68, 255))
+
+    # 7. Head & Face
+    d.ellipse([cx - 18*s, head_y - 16*s, cx + 18*s, head_y + 16*s], fill=skin_color)
+    d.ellipse([cx - 16*s, head_y + 2*s, cx - 8*s, head_y + 8*s], fill=(251, 113, 133, 160))
+    d.ellipse([cx + 8*s, head_y + 2*s, cx + 16*s, head_y + 8*s], fill=(251, 113, 133, 160))
+
+    if pose == "catch":
+        d.arc([cx - 13*s, head_y - 6*s, cx - 5*s, head_y], start=180, end=360, fill=(30, 41, 59, 255), width=3*s)
+        d.arc([cx + 5*s, head_y - 6*s, cx + 13*s, head_y], start=180, end=360, fill=(30, 41, 59, 255), width=3*s)
+        d.chord([cx - 7*s, head_y + 4*s, cx + 7*s, head_y + 14*s], start=0, end=180, fill=(225, 29, 72, 255))
+        d.chord([cx - 4*s, head_y + 8*s, cx + 4*s, head_y + 14*s], start=0, end=180, fill=(255, 255, 255, 255))
+    elif pose == "think":
+        d.ellipse([cx - 12*s, head_y - 5*s, cx - 6*s, head_y + 1*s], fill=(30, 41, 59, 255))
+        d.ellipse([cx + 6*s, head_y - 5*s, cx + 12*s, head_y + 1*s], fill=(30, 41, 59, 255))
+        d.ellipse([cx - 9*s, head_y - 4*s, cx - 7*s, head_y - 2*s], fill=(255, 255, 255, 255))
+        d.ellipse([cx + 9*s, head_y - 4*s, cx + 11*s, head_y - 2*s], fill=(255, 255, 255, 255))
+        d.arc([cx - 5*s, head_y + 4*s, cx + 5*s, head_y + 10*s], start=20, end=160, fill=(185, 28, 28, 255), width=2*s)
+    else:
+        d.ellipse([cx - 13*s, head_y - 6*s, cx - 5*s, head_y + 2*s], fill=(30, 41, 59, 255))
+        d.ellipse([cx + 5*s, head_y - 6*s, cx + 13*s, head_y + 2*s], fill=(30, 41, 59, 255))
+        d.ellipse([cx - 11*s, head_y - 5*s, cx - 8*s, head_y - 2*s], fill=(255, 255, 255, 255))
+        d.ellipse([cx + 7*s, head_y - 5*s, cx + 10*s, head_y - 2*s], fill=(255, 255, 255, 255))
+        d.arc([cx - 6*s, head_y + 4*s, cx + 6*s, head_y + 10*s], start=10, end=170, fill=(185, 28, 28, 255), width=2*s)
+
+    # 8. Front Hair Curls
+    d.ellipse([cx - 16*s, head_y - 20*s, cx - 2*s, head_y - 6*s], fill=(146, 64, 14, 255))
+    d.ellipse([cx - 4*s, head_y - 21*s, cx + 14*s, head_y - 8*s], fill=(120, 53, 15, 255))
+    d.ellipse([cx + 8*s, head_y - 19*s, cx + 18*s, head_y - 7*s], fill=(146, 64, 14, 255))
+
+    # 9. Sparkling Golden Royal Tiara
+    crown_y = head_y - 18 * s
+    crown_pts = [
+        (cx - 15*s, crown_y),
+        (cx - 15*s, crown_y - 12*s),
+        (cx - 8*s, crown_y - 4*s),
+        (cx, crown_y - 16*s),
+        (cx + 8*s, crown_y - 4*s),
+        (cx + 15*s, crown_y - 12*s),
+        (cx + 15*s, crown_y)
+    ]
+    d.polygon(crown_pts, fill=(251, 191, 36, 255), outline=(217, 119, 6, 255))
+    d.rounded_rectangle([cx - 16*s, crown_y - 2*s, cx + 16*s, crown_y + 2*s], radius=2*s, fill=(245, 158, 11, 255))
+    d.ellipse([cx - 3*s, crown_y - 9*s, cx + 3*s, crown_y - 3*s], fill=(225, 29, 72, 255))
+    d.ellipse([cx - 16*s, crown_y - 14*s, cx - 14*s, crown_y - 12*s], fill=(255, 255, 255, 255))
+    d.ellipse([cx + 14*s, crown_y - 14*s, cx + 16*s, crown_y - 12*s], fill=(255, 255, 255, 255))
+    d.ellipse([cx - 1*s, crown_y - 18*s, cx + 1*s, crown_y - 16*s], fill=(255, 255, 255, 255))
+
+    return finalize(img, w, h)
+
+# ==============================================================================
+# 12 MAGICAL STORYBOOK FRUIT SPRITES (80x80 px) WITH CUTE EXPRESSIVE FACES
 # ==============================================================================
 
 def draw_apple(w=80, h=80):
@@ -34,20 +205,21 @@ def draw_apple(w=80, h=80):
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2 + (4 * s)
 
-    # Stem
+    # Stem & Leaf
     d.line([(cx - 2*s, cy - 24*s), (cx - 8*s, cy - 36*s)], fill=(93, 64, 55, 255), width=5*s)
-    # Leaf
     leaf_pts = [(cx - 3*s, cy - 28*s), (cx + 18*s, cy - 36*s), (cx + 12*s, cy - 22*s)]
     d.polygon(leaf_pts, fill=(67, 160, 71, 255))
-    d.line([(cx - 3*s, cy - 28*s), (cx + 18*s, cy - 36*s)], fill=(46, 125, 50, 255), width=2*s)
 
-    # Apple Body (Dual lobes)
+    # Apple Body
     r = 25 * s
-    d.ellipse([cx - r - 2*s, cy - r, cx + 5*s, cy + r], fill=(229, 57, 53, 255))
-    d.ellipse([cx - 5*s, cy - r, cx + r + 2*s, cy + r], fill=(211, 47, 47, 255))
-    d.ellipse([cx - 20*s, cy - 10*s, cx + 20*s, cy + 24*s], fill=(229, 57, 53, 255))
-    d.ellipse([cx - 7*s, cy - r - 2*s, cx + 7*s, cy - r + 6*s], fill=(183, 28, 28, 255))
-    d.ellipse([cx - 20*s, cy - 18*s, cx - 10*s, cy - 6*s], fill=(255, 205, 210, 200))
+    d.ellipse([cx - r - 2*s, cy - r, cx + 5*s, cy + r], fill=(239, 68, 68, 255))
+    d.ellipse([cx - 5*s, cy - r, cx + r + 2*s, cy + r], fill=(220, 38, 38, 255))
+    d.ellipse([cx - 20*s, cy - 10*s, cx + 20*s, cy + 24*s], fill=(239, 68, 68, 255))
+    # Specular highlight
+    d.ellipse([cx - 20*s, cy - 18*s, cx - 10*s, cy - 6*s], fill=(255, 205, 210, 180))
+
+    # Cute Expressive Storybook Face
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=8, eye_r=2.8, smile_w=5)
     return finalize(img, w, h)
 
 def draw_orange(w=80, h=80):
@@ -57,28 +229,14 @@ def draw_orange(w=80, h=80):
     cx, cy = (w * s) / 2, (h * s) / 2 + (2 * s)
     r = 28 * s
 
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 152, 0, 255))
-    d.arc([cx - r, cy - r, cx + r, cy + r], start=0, end=140, fill=(245, 124, 0, 255), width=4*s)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(249, 115, 22, 255))
+    d.arc([cx - r, cy - r, cx + r, cy + r], start=0, end=140, fill=(234, 88, 12, 255), width=4*s)
 
-    for angle in [30, 75, 120, 210, 250, 300]:
-        rad = math.radians(angle)
-        px = cx + (r * 0.65) * math.cos(rad)
-        py = cy + (r * 0.65) * math.sin(rad)
-        d.ellipse([px - 1.5*s, py - 1.5*s, px + 1.5*s, py + 1.5*s], fill=(255, 183, 77, 255))
+    # Green leaf on top
+    d.ellipse([cx - 6*s, cy - r - 6*s, cx + 6*s, cy - r + 4*s], fill=(34, 197, 94, 255))
+    d.ellipse([cx - 20*s, cy - 20*s, cx - 10*s, cy - 8*s], fill=(255, 237, 213, 180))
 
-    calyx_pts = [
-        (cx, cy - r + 1*s),
-        (cx + 6*s, cy - r - 6*s),
-        (cx + 2*s, cy - r + 3*s),
-        (cx + 8*s, cy - r + 4*s),
-        (cx + 1*s, cy - r + 6*s),
-        (cx - 7*s, cy - r + 5*s),
-        (cx - 3*s, cy - r + 2*s),
-        (cx - 6*s, cy - r - 6*s),
-    ]
-    d.polygon(calyx_pts, fill=(56, 142, 60, 255))
-    d.ellipse([cx - 2*s, cy - r + 1*s, cx + 2*s, cy - r + 5*s], fill=(93, 64, 55, 255))
-    d.ellipse([cx - 20*s, cy - 20*s, cx - 10*s, cy - 8*s], fill=(255, 224, 130, 200))
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=9, eye_r=2.8, smile_w=6)
     return finalize(img, w, h)
 
 def draw_grape(w=80, h=80):
@@ -87,9 +245,9 @@ def draw_grape(w=80, h=80):
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2 + (2 * s)
 
-    d.line([(cx, cy - 26*s), (cx, cy - 36*s)], fill=(85, 139, 47, 255), width=4*s)
-    d.arc([cx - 10*s, cy - 38*s, cx + 6*s, cy - 26*s], start=180, end=360, fill=(85, 139, 47, 255), width=3*s)
-    d.polygon([(cx, cy - 30*s), (cx - 16*s, cy - 36*s), (cx - 12*s, cy - 24*s)], fill=(104, 159, 56, 255))
+    # Stem & curly vine
+    d.line([(cx, cy - 26*s), (cx, cy - 36*s)], fill=(101, 163, 13, 255), width=4*s)
+    d.arc([cx - 10*s, cy - 38*s, cx + 6*s, cy - 26*s], start=180, end=360, fill=(101, 163, 13, 255), width=3*s)
 
     grape_positions = [
         (-18, -14), (-6, -16), (6, -16), (18, -14),
@@ -99,10 +257,11 @@ def draw_grape(w=80, h=80):
     ]
     gr = 9 * s
     for gx, gy in grape_positions:
-        x, y = cx + gx * s, cy + gy * s
-        d.ellipse([x - gr, y - gr, x + gr, y + gr], fill=(123, 31, 162, 255))
-        d.ellipse([x - gr + 1*s, y - gr + 1*s, x + gr - 1*s, y + gr - 1*s], outline=(74, 20, 140, 255), width=2*s)
-        d.ellipse([x - 5*s, y - 6*s, x - 1*s, y - 2*s], fill=(225, 190, 231, 220))
+        d.ellipse([cx + gx*s - gr, cy + gy*s - gr, cx + gx*s + gr, cy + gy*s + gr], fill=(139, 92, 246, 255))
+        d.ellipse([cx + gx*s - gr*0.6, cy + gy*s - gr*0.6, cx + gx*s, cy + gy*s], fill=(196, 181, 253, 180))
+
+    # Cute face centered on the central grapes
+    draw_cute_face(d, cx, cy - 2*s, s, eye_dist=7, eye_r=2.4, smile_w=4)
     return finalize(img, w, h)
 
 def draw_banana(w=80, h=80):
@@ -111,51 +270,34 @@ def draw_banana(w=80, h=80):
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2
 
-    outer_pts = [
-        (cx - 24*s, cy - 30*s),
-        (cx - 18*s, cy - 20*s),
-        (cx + 8*s,  cy - 12*s),
-        (cx + 26*s, cy + 4*s),
-        (cx + 28*s, cy + 22*s),
-        (cx + 18*s, cy + 32*s),
-        (cx + 14*s, cy + 30*s),
-        (cx + 18*s, cy + 18*s),
-        (cx + 10*s, cy + 2*s),
-        (cx - 6*s,  cy - 10*s),
-        (cx - 20*s, cy - 22*s),
-        (cx - 26*s, cy - 28*s)
-    ]
-    d.polygon(outer_pts, fill=(255, 235, 59, 255))
-    d.line(outer_pts + [outer_pts[0]], fill=(251, 192, 45, 255), width=3*s)
-    ridge_pts = [
-        (cx - 22*s, cy - 26*s),
-        (cx - 8*s, cy - 14*s),
-        (cx + 14*s, cy + 2*s),
-        (cx + 22*s, cy + 16*s),
-        (cx + 16*s, cy + 31*s)
-    ]
-    d.line(ridge_pts, fill=(245, 127, 23, 255), width=2*s)
-    d.ellipse([cx - 27*s, cy - 32*s, cx - 21*s, cy - 26*s], fill=(78, 52, 46, 255))
-    d.ellipse([cx + 14*s, cy + 29*s, cx + 20*s, cy + 34*s], fill=(78, 52, 46, 255))
+    # Banana curve
+    d.arc([cx - 30*s, cy - 32*s, cx + 30*s, cy + 28*s], start=30, end=150, fill=(234, 179, 8, 255), width=22*s)
+    d.arc([cx - 30*s, cy - 32*s, cx + 30*s, cy + 28*s], start=35, end=145, fill=(250, 204, 21, 255), width=18*s)
+    # Stem & tip
+    d.rectangle([cx + 18*s, cy - 14*s, cx + 24*s, cy - 8*s], fill=(101, 163, 13, 255))
+    d.rectangle([cx - 24*s, cy - 14*s, cx - 18*s, cy - 8*s], fill=(113, 63, 18, 255))
+
+    draw_cute_face(d, cx, cy + 6*s, s, eye_dist=7, eye_r=2.5, smile_w=5)
     return finalize(img, w, h)
 
 def draw_watermelon(w=80, h=80):
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
+    cx, cy = (w * s) / 2, (h * s) / 2 + (4 * s)
 
-    p_top = (cx, cy - 32*s)
-    d.pieslice([cx - 38*s, cy - 20*s, cx + 38*s, cy + 34*s], start=25, end=155, fill=(27, 94, 32, 255))
-    d.pieslice([cx - 34*s, cy - 20*s, cx + 34*s, cy + 30*s], start=25, end=155, fill=(76, 175, 80, 255))
-    d.pieslice([cx - 31*s, cy - 20*s, cx + 31*s, cy + 27*s], start=25, end=155, fill=(232, 245, 233, 255))
-    d.polygon([p_top, (cx - 26*s, cy + 22*s), (cx + 26*s, cy + 22*s)], fill=(233, 30, 99, 255))
+    # Rind (Green)
+    d.chord([cx - 32*s, cy - 30*s, cx + 32*s, cy + 30*s], start=0, end=180, fill=(22, 163, 74, 255))
+    # Inner White Rind
+    d.chord([cx - 29*s, cy - 28*s, cx + 29*s, cy + 28*s], start=0, end=180, fill=(240, 253, 244, 255))
+    # Red Flesh
+    d.chord([cx - 26*s, cy - 26*s, cx + 26*s, cy + 26*s], start=0, end=180, fill=(244, 63, 94, 255))
 
-    seeds = [(-10, 10), (10, 10), (0, 3), (-8, -6), (8, -6)]
-    for sx, sy in seeds:
-        px, py = cx + sx * s, cy + sy * s
-        d.ellipse([px - 2.5*s, py - 4*s, px + 2.5*s, py + 4*s], fill=(33, 33, 33, 255))
-        d.ellipse([px - 1*s, py - 3*s, px + 1*s, py - 1*s], fill=(255, 255, 255, 220))
+    # Seeds
+    for sx, sy in [(-14, 4), (14, 4), (-6, 16), (6, 16)]:
+        d.ellipse([cx + sx*s - 2*s, cy + sy*s - 3*s, cx + sx*s + 2*s, cy + sy*s + 3*s], fill=(30, 41, 59, 255))
+
+    draw_cute_face(d, cx, cy + 4*s, s, eye_dist=8, eye_r=2.8, smile_w=6)
     return finalize(img, w, h)
 
 def draw_blueberry(w=80, h=80):
@@ -165,65 +307,45 @@ def draw_blueberry(w=80, h=80):
     cx, cy = (w * s) / 2, (h * s) / 2 + (2 * s)
     r = 27 * s
 
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(30, 136, 229, 255))
-    d.arc([cx - r, cy - r, cx + r, cy + r], start=0, end=140, fill=(26, 35, 126, 255), width=5*s)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(37, 99, 235, 255))
+    d.arc([cx - r, cy - r, cx + r, cy + r], start=0, end=140, fill=(29, 78, 216, 255), width=4*s)
 
-    crown_y = cy - r + 6*s
-    d.ellipse([cx - 9*s, crown_y - 6*s, cx + 9*s, crown_y + 6*s], fill=(13, 71, 161, 255))
-    crown_pts = [
-        (cx, crown_y - 8*s),
-        (cx + 7*s, crown_y - 4*s),
-        (cx + 9*s, crown_y + 4*s),
-        (cx, crown_y + 6*s),
-        (cx - 9*s, crown_y + 4*s),
-        (cx - 7*s, crown_y - 4*s)
-    ]
-    d.polygon(crown_pts, fill=(21, 101, 192, 255))
-    d.ellipse([cx - 4*s, crown_y - 3*s, cx + 4*s, crown_y + 3*s], fill=(13, 71, 161, 255))
-    d.ellipse([cx - 18*s, cy - 16*s, cx - 8*s, cy - 6*s], fill=(187, 222, 251, 190))
+    # Crown crown calyx on top
+    d.polygon([(cx - 8*s, cy - r + 2*s), (cx - 12*s, cy - r - 4*s), (cx - 4*s, cy - r),
+               (cx, cy - r - 6*s), (cx + 4*s, cy - r), (cx + 12*s, cy - r - 4*s),
+               (cx + 8*s, cy - r + 2*s)], fill=(30, 58, 138, 255))
+    d.ellipse([cx - 18*s, cy - 18*s, cx - 8*s, cy - 8*s], fill=(191, 219, 254, 180))
+
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=8, eye_r=2.6, smile_w=5)
     return finalize(img, w, h)
 
 def draw_strawberry(w=80, h=80):
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2 + (2 * s)
+    cx, cy = (w * s) / 2, (h * s) / 2 + (4 * s)
 
+    # Heart/Cone Body
     body_pts = [
         (cx, cy + 28*s),
-        (cx - 18*s, cy + 18*s),
-        (cx - 26*s, cy - 2*s),
-        (cx - 22*s, cy - 20*s),
-        (cx - 10*s, cy - 24*s),
-        (cx, cy - 20*s),
-        (cx + 10*s, cy - 24*s),
-        (cx + 22*s, cy - 20*s),
-        (cx + 26*s, cy - 2*s),
-        (cx + 18*s, cy + 18*s)
+        (cx - 26*s, cy - 4*s),
+        (cx - 24*s, cy - 20*s),
+        (cx, cy - 16*s),
+        (cx + 24*s, cy - 20*s),
+        (cx + 26*s, cy - 4*s)
     ]
-    d.polygon(body_pts, fill=(229, 57, 53, 255))
-    d.line(body_pts + [body_pts[0]], fill=(198, 40, 40, 255), width=3*s)
+    d.polygon(body_pts, fill=(239, 68, 68, 255))
+    d.ellipse([cx - 26*s, cy - 22*s, cx + 26*s, cy + 14*s], fill=(239, 68, 68, 255))
 
-    seed_locs = [
-        (-12, -14), (0, -14), (12, -14),
-        (-16, -4), (-5, -4), (6, -4), (17, -4),
-        (-12, 6), (0, 6), (12, 6),
-        (-6, 16), (6, 16),
-        (0, 23)
-    ]
-    for sx, sy in seed_locs:
-        px, py = cx + sx * s, cy + sy * s
-        d.ellipse([px - 1.5*s, py - 2.5*s, px + 1.5*s, py + 2.5*s], fill=(255, 245, 157, 255))
+    # Green Leaf Crown
+    d.polygon([(cx - 18*s, cy - 24*s), (cx - 8*s, cy - 18*s), (cx, cy - 28*s),
+               (cx + 8*s, cy - 18*s), (cx + 18*s, cy - 24*s), (cx, cy - 18*s)], fill=(34, 197, 94, 255))
 
-    leaf_top = [
-        (cx, cy - 32*s), (cx - 4*s, cy - 24*s),
-        (cx - 22*s, cy - 26*s), (cx - 10*s, cy - 18*s),
-        (cx - 16*s, cy - 12*s), (cx - 4*s, cy - 16*s),
-        (cx + 4*s, cy - 16*s), (cx + 16*s, cy - 12*s),
-        (cx + 10*s, cy - 18*s), (cx + 22*s, cy - 26*s),
-        (cx + 4*s, cy - 24*s)
-    ]
-    d.polygon(leaf_top, fill=(46, 125, 50, 255))
+    # Yellow seeds
+    for px, py in [(-12, -4), (12, -4), (-6, 8), (6, 8), (0, 18)]:
+        d.ellipse([cx + px*s - 1.5*s, cy + py*s - 1.5*s, cx + px*s + 1.5*s, cy + py*s + 1.5*s], fill=(254, 240, 138, 255))
+
+    draw_cute_face(d, cx, cy - 2*s, s, eye_dist=8, eye_r=2.6, smile_w=5)
     return finalize(img, w, h)
 
 def draw_lemon(w=80, h=80):
@@ -232,20 +354,13 @@ def draw_lemon(w=80, h=80):
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2
 
-    lemon_pts = [
-        (cx - 30*s, cy),
-        (cx - 22*s, cy - 18*s),
-        (cx, cy - 25*s),
-        (cx + 22*s, cy - 18*s),
-        (cx + 30*s, cy),
-        (cx + 22*s, cy + 18*s),
-        (cx, cy + 25*s),
-        (cx - 22*s, cy + 18*s)
-    ]
-    d.polygon(lemon_pts, fill=(255, 238, 88, 255))
-    d.line(lemon_pts + [lemon_pts[0]], fill=(251, 192, 45, 255), width=3*s)
-    d.polygon([(cx - 30*s, cy), (cx - 38*s, cy - 12*s), (cx - 28*s, cy - 10*s)], fill=(76, 175, 80, 255))
-    d.ellipse([cx - 15*s, cy - 18*s, cx + 15*s, cy - 6*s], fill=(255, 253, 231, 200))
+    # Oval with tips
+    d.ellipse([cx - 28*s, cy - 22*s, cx + 28*s, cy + 22*s], fill=(250, 204, 21, 255))
+    d.polygon([(cx - 28*s, cy - 6*s), (cx - 34*s, cy), (cx - 28*s, cy + 6*s)], fill=(234, 179, 8, 255))
+    d.polygon([(cx + 28*s, cy - 6*s), (cx + 34*s, cy), (cx + 28*s, cy + 6*s)], fill=(234, 179, 8, 255))
+    d.ellipse([cx - 16*s, cy - 14*s, cx - 6*s, cy - 4*s], fill=(254, 249, 195, 200))
+
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=8, eye_r=2.8, smile_w=5)
     return finalize(img, w, h)
 
 def draw_kiwi(w=80, h=80):
@@ -253,344 +368,363 @@ def draw_kiwi(w=80, h=80):
     d = ImageDraw.Draw(img)
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2
-    r = 28 * s
+    r = 27 * s
 
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(109, 76, 65, 255))
-    d.ellipse([cx - r + 3*s, cy - r + 3*s, cx + r - 3*s, cy + r - 3*s], fill=(93, 64, 55, 255))
+    # Fuzzy brown rind
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(161, 98, 7, 255))
+    # Green interior
+    d.ellipse([cx - r + 3*s, cy - r + 3*s, cx + r - 3*s, cy + r - 3*s], fill=(132, 204, 22, 255))
+    # Cream center
+    d.ellipse([cx - 8*s, cy - 8*s, cx + 8*s, cy + 8*s], fill=(254, 240, 138, 255))
 
-    rf = r - 5*s
-    d.ellipse([cx - rf, cy - rf, cx + rf, cy + rf], fill=(139, 195, 74, 255))
-
-    for angle in range(0, 360, 24):
-        rad = math.radians(angle)
-        x1 = cx + (rf * 0.35) * math.cos(rad)
-        y1 = cy + (rf * 0.35) * math.sin(rad)
-        x2 = cx + (rf * 0.85) * math.cos(rad)
-        y2 = cy + (rf * 0.85) * math.sin(rad)
-        d.line([(x1, y1), (x2, y2)], fill=(197, 225, 165, 200), width=2*s)
-
-    for angle in range(0, 360, 24):
-        rad = math.radians(angle + 12)
-        sx = cx + (rf * 0.55) * math.cos(rad)
-        sy = cy + (rf * 0.55) * math.sin(rad)
-        d.ellipse([sx - 1.5*s, sy - 2.5*s, sx + 1.5*s, sy + 2.5*s], fill=(33, 33, 33, 255))
-
-    rc = 7 * s
-    d.ellipse([cx - rc, cy - rc, cx + rc, cy + rc], fill=(241, 248, 233, 255))
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=8, eye_r=2.5, smile_w=5)
     return finalize(img, w, h)
 
 def draw_peach(w=80, h=80):
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2 + (4 * s)
+    cx, cy = (w * s) / 2, (h * s) / 2 + (2 * s)
 
-    d.line([(cx, cy - 24*s), (cx + 4*s, cy - 36*s)], fill=(93, 64, 55, 255), width=4*s)
-    d.polygon([(cx + 4*s, cy - 30*s), (cx + 24*s, cy - 32*s), (cx + 12*s, cy - 22*s)], fill=(56, 142, 60, 255))
+    # Leaf
+    d.polygon([(cx, cy - 24*s), (cx + 16*s, cy - 32*s), (cx + 10*s, cy - 18*s)], fill=(34, 197, 94, 255))
+    # Peach Body (Warm peach gradient)
+    r = 26 * s
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(251, 146, 60, 255))
+    d.ellipse([cx - r, cy - r, cx + 4*s, cy + r], fill=(251, 113, 133, 200))
+    d.arc([cx, cy - r + 2*s, cx + 8*s, cy + r - 2*s], start=90, end=270, fill=(244, 63, 94, 200), width=3*s)
 
-    r = 25 * s
-    d.ellipse([cx - r - 2*s, cy - r, cx + 4*s, cy + r], fill=(255, 112, 67, 255))
-    d.ellipse([cx - 4*s, cy - r, cx + r + 2*s, cy + r], fill=(255, 213, 79, 255))
-    d.ellipse([cx - 18*s, cy - 10*s, cx + 18*s, cy + 24*s], fill=(255, 167, 38, 255))
-    d.line([(cx, cy - r + 3*s), (cx, cy + 18*s)], fill=(230, 81, 0, 200), width=2*s)
-    d.ellipse([cx - 18*s, cy - 16*s, cx - 8*s, cy - 6*s], fill=(255, 224, 178, 190))
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=8, eye_r=2.8, smile_w=5)
     return finalize(img, w, h)
 
 def draw_plum(w=80, h=80):
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2 + (4 * s)
+    cx, cy = (w * s) / 2, (h * s) / 2 + (2 * s)
     r = 26 * s
 
-    d.line([(cx, cy - 24*s), (cx - 3*s, cy - 34*s)], fill=(78, 52, 46, 255), width=4*s)
-    d.polygon([(cx, cy - 28*s), (cx + 14*s, cy - 32*s), (cx + 8*s, cy - 22*s)], fill=(67, 160, 71, 255))
+    # Deep violet plum
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(109, 40, 217, 255))
+    d.ellipse([cx - 16*s, cy - 16*s, cx - 6*s, cy - 6*s], fill=(216, 180, 254, 180))
+    # Small stem
+    d.line([(cx, cy - r), (cx - 4*s, cy - r - 8*s)], fill=(101, 163, 13, 255), width=3*s)
 
-    d.ellipse([cx - r, cy - r - 2*s, cx + r, cy + r + 2*s], fill=(74, 20, 140, 255))
-    d.ellipse([cx - 18*s, cy - 18*s, cx - 6*s, cy - 6*s], fill=(206, 147, 216, 190))
-    d.arc([cx - r, cy - r, cx + 2*s, cy + r], start=70, end=110, fill=(49, 27, 146, 255), width=3*s)
+    draw_cute_face(d, cx, cy + 2*s, s, eye_dist=8, eye_r=2.6, smile_w=5)
     return finalize(img, w, h)
 
 def draw_cherry(w=80, h=80):
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2 + (8 * s)
+    cx, cy = (w * s) / 2, (h * s) / 2 + (4 * s)
 
-    top_stem = (cx, cy - 36*s)
-    c1 = (cx - 16*s, cy + 2*s)
-    c2 = (cx + 16*s, cy + 2*s)
-    d.line([top_stem, (cx - 12*s, cy - 12*s), c1], fill=(56, 142, 60, 255), width=4*s)
-    d.line([top_stem, (cx + 12*s, cy - 12*s), c2], fill=(56, 142, 60, 255), width=4*s)
-    d.polygon([top_stem, (cx + 16*s, cy - 40*s), (cx + 12*s, cy - 26*s)], fill=(76, 175, 80, 255))
+    # Dual Cherries
+    # Stems meeting at top
+    d.arc([cx - 20*s, cy - 36*s, cx, cy - 6*s], start=270, end=360, fill=(101, 163, 13, 255), width=3*s)
+    d.arc([cx, cy - 36*s, cx + 20*s, cy - 6*s], start=180, end=270, fill=(101, 163, 13, 255), width=3*s)
+    # Leaf at join
+    d.polygon([(cx, cy - 32*s), (cx + 12*s, cy - 36*s), (cx + 6*s, cy - 26*s)], fill=(34, 197, 94, 255))
 
-    r = 15 * s
-    for x, y in [c1, c2]:
-        d.ellipse([x - r, y - r, x + r, y + r], fill=(194, 24, 91, 255))
-        d.arc([x - r, y - r, x + r, y + r], start=0, end=140, fill=(183, 28, 28, 255), width=3*s)
-        d.ellipse([x - 8*s, y - 9*s, x - 2*s, y - 3*s], fill=(255, 255, 255, 230))
+    # Left Cherry
+    d.ellipse([cx - 24*s, cy - 8*s, cx - 2*s, cy + 14*s], fill=(225, 29, 72, 255))
+    d.ellipse([cx - 20*s, cy - 5*s, cx - 14*s, cy + 1*s], fill=(254, 205, 211, 200))
+    draw_cute_face(d, cx - 13*s, cy + 3*s, s, eye_dist=4, eye_r=1.8, smile_w=3)
+
+    # Right Cherry
+    d.ellipse([cx + 2*s, cy - 2*s, cx + 24*s, cy + 20*s], fill=(225, 29, 72, 255))
+    d.ellipse([cx + 6*s, cy + 1*s, cx + 12*s, cy + 7*s], fill=(254, 205, 211, 200))
+    draw_cute_face(d, cx + 13*s, cy + 9*s, s, eye_dist=4, eye_r=1.8, smile_w=3)
+
     return finalize(img, w, h)
 
 # ==============================================================================
-# BASKET CATCHER (128x64 px)
+# BASKETS & UI
 # ==============================================================================
 
 def draw_basket(w=128, h=64):
+    """Classic Catcher Basket"""
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2
 
-    bowl_pts = [
-        (cx - 52*s, cy - 16*s),
-        (cx + 52*s, cy - 16*s),
-        (cx + 38*s, cy + 26*s),
-        (cx - 38*s, cy + 26*s)
-    ]
-    d.polygon(bowl_pts, fill=(141, 110, 99, 255))
-
-    for offset in range(-45, 46, 12):
-        d.line([(cx + offset*s - 12*s, cy - 16*s), (cx + offset*s + 8*s, cy + 26*s)], fill=(188, 170, 164, 255), width=3*s)
-        d.line([(cx + offset*s + 12*s, cy - 16*s), (cx + offset*s - 8*s, cy + 26*s)], fill=(109, 76, 65, 255), width=3*s)
-
-    d.rounded_rectangle([cx - 56*s, cy - 22*s, cx + 56*s, cy - 12*s], radius=5*s, fill=(109, 76, 65, 255))
-    d.rounded_rectangle([cx - 54*s, cy - 20*s, cx + 54*s, cy - 14*s], radius=3*s, fill=(141, 110, 99, 255))
-    d.ellipse([cx - 48*s, cy - 22*s, cx + 48*s, cy - 14*s], fill=(62, 39, 35, 255))
-
-    d.arc([cx - 62*s, cy - 16*s, cx - 48*s, cy + 4*s], start=90, end=270, fill=(109, 76, 65, 255), width=5*s)
-    d.arc([cx + 48*s, cy - 16*s, cx + 62*s, cy + 4*s], start=270, end=90, fill=(109, 76, 65, 255), width=5*s)
+    # Wicker Basket
+    d.chord([cx - 48*s, cy - 24*s, cx + 48*s, cy + 28*s], start=0, end=180, fill=(180, 83, 9, 255))
+    d.chord([cx - 44*s, cy - 20*s, cx + 44*s, cy + 24*s], start=0, end=180, fill=(217, 119, 6, 255))
+    # Rim
+    d.rounded_rectangle([cx - 52*s, cy - 26*s, cx + 52*s, cy - 16*s], radius=5*s, fill=(245, 158, 11, 255))
+    # Wicker cross pattern
+    for x in range(int(cx - 36*s), int(cx + 40*s), int(12*s)):
+        d.line([(x, cy - 16*s), (x + 8*s, cy + 22*s)], fill=(180, 83, 9, 255), width=2*s)
+        d.line([(x + 8*s, cy - 16*s), (x, cy + 22*s)], fill=(180, 83, 9, 255), width=2*s)
 
     return finalize(img, w, h)
 
-# ==============================================================================
-# UI BUTTONS & CONTROLS (64x64 px)
-# ==============================================================================
-
-def draw_btn_circle(w, h, bg_color, shadow_color):
-    img = make_canvas(w, h)
-    d = ImageDraw.Draw(img)
-    s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
-    r = 27 * s
-
-    d.ellipse([cx - r, cy - r + 3*s, cx + r, cy + r + 3*s], fill=shadow_color)
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=bg_color)
-    d.arc([cx - r + 2*s, cy - r + 2*s, cx + r - 2*s, cy + r - 2*s], start=180, end=360, fill=(255, 255, 255, 120), width=2*s)
-    return img, d, s, cx, cy
-
-def draw_btn_pause(w=64, h=64):
-    img, d, s, cx, cy = draw_btn_circle(w, h, (2, 136, 209, 255), (1, 87, 155, 255))
-    bw, bh = 5*s, 18*s
-    d.rounded_rectangle([cx - 8*s - bw/2, cy - bh/2, cx - 8*s + bw/2, cy + bh/2], radius=2*s, fill=(255, 255, 255, 255))
-    d.rounded_rectangle([cx + 8*s - bw/2, cy - bh/2, cx + 8*s + bw/2, cy + bh/2], radius=2*s, fill=(255, 255, 255, 255))
-    return finalize(img, w, h)
-
-def draw_btn_sound(w=64, h=64):
-    img, d, s, cx, cy = draw_btn_circle(w, h, (0, 137, 123, 255), (0, 77, 64, 255))
-    d.polygon([(cx - 12*s, cy - 6*s), (cx - 4*s, cy - 6*s), (cx + 5*s, cy - 14*s),
-               (cx + 5*s, cy + 14*s), (cx - 4*s, cy + 6*s), (cx - 12*s, cy + 6*s)], fill=(255, 255, 255, 255))
-    d.arc([cx + 1*s, cy - 10*s, cx + 13*s, cy + 10*s], start=300, end=60, fill=(255, 255, 255, 255), width=3*s)
-    d.arc([cx + 4*s, cy - 16*s, cx + 20*s, cy + 16*s], start=300, end=60, fill=(255, 255, 255, 255), width=3*s)
-    return finalize(img, w, h)
-
-def draw_btn_sound_off(w=64, h=64):
-    img, d, s, cx, cy = draw_btn_circle(w, h, (84, 110, 122, 255), (55, 71, 79, 255))
-    d.polygon([(cx - 14*s, cy - 6*s), (cx - 6*s, cy - 6*s), (cx + 3*s, cy - 14*s),
-               (cx + 3*s, cy + 14*s), (cx - 6*s, cy + 6*s), (cx - 14*s, cy + 6*s)], fill=(255, 255, 255, 255))
-    d.line([(cx + 6*s, cy - 10*s), (cx + 18*s, cy + 10*s)], fill=(229, 57, 53, 255), width=4*s)
-    d.line([(cx + 18*s, cy - 10*s), (cx + 6*s, cy + 10*s)], fill=(229, 57, 53, 255), width=4*s)
-    return finalize(img, w, h)
-
-def draw_btn_replay(w=64, h=64):
-    img, d, s, cx, cy = draw_btn_circle(w, h, (251, 140, 0, 255), (230, 81, 0, 255))
-    d.arc([cx - 14*s, cy - 14*s, cx + 14*s, cy + 14*s], start=60, end=330, fill=(255, 255, 255, 255), width=4*s)
-    d.polygon([(cx - 14*s, cy - 4*s), (cx - 6*s, cy - 16*s), (cx - 18*s, cy - 14*s)], fill=(255, 255, 255, 255))
-    return finalize(img, w, h)
-
-def draw_btn_home(w=64, h=64):
-    img, d, s, cx, cy = draw_btn_circle(w, h, (142, 36, 170, 255), (74, 20, 140, 255))
-    d.polygon([(cx, cy - 16*s), (cx - 16*s, cy - 2*s), (cx + 16*s, cy - 2*s)], fill=(255, 255, 255, 255))
-    d.rectangle([cx - 12*s, cy - 2*s, cx + 12*s, cy + 14*s], fill=(255, 255, 255, 255))
-    d.rounded_rectangle([cx - 4*s, cy + 4*s, cx + 4*s, cy + 14*s], radius=2*s, fill=(142, 36, 170, 255))
-    return finalize(img, w, h)
-
-# ==============================================================================
-# STAR RATING BADGES (48x48 px)
-# ==============================================================================
-
-def get_star_points(cx, cy, r_out, r_in):
-    pts = []
-    for i in range(10):
-        r = r_out if i % 2 == 0 else r_in
-        angle = -math.pi / 2 + (i * math.pi / 5)
-        pts.append((cx + r * math.cos(angle), cy + r * math.sin(angle)))
-    return pts
-
-def draw_star_full(w=48, h=48):
-    img = make_canvas(w, h)
-    d = ImageDraw.Draw(img)
-    s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
-    pts = get_star_points(cx, cy, 21*s, 9*s)
-
-    d.polygon(pts, fill=(255, 215, 0, 255))
-    d.line(pts + [pts[0]], fill=(255, 160, 0, 255), width=3*s)
-    d.polygon([(cx, cy - 21*s), (cx, cy), (cx - 12*s, cy - 6*s)], fill=(255, 249, 196, 220))
-    return finalize(img, w, h)
-
-def draw_star_empty(w=48, h=48):
-    img = make_canvas(w, h)
-    d = ImageDraw.Draw(img)
-    s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
-    pts = get_star_points(cx, cy, 21*s, 9*s)
-
-    d.polygon(pts, fill=(236, 239, 241, 100))
-    d.line(pts + [pts[0]], fill=(120, 144, 156, 255), width=3*s)
-    return finalize(img, w, h)
-
-# ==============================================================================
-# ORCHARD TREE GROWTH STAGES (128x128 px)
-# ==============================================================================
-
-def draw_tree_stage(stage, w=128, h=128):
+def draw_basket_royal(w=128, h=64):
+    """Royal Braided Golden Basket with Crimson Velvet & Jewels"""
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
     cx, cy = (w * s) / 2, (h * s) / 2
 
-    # Soil mound
-    d.ellipse([cx - 45*s, cy + 42*s, cx + 45*s, cy + 58*s], fill=(121, 85, 72, 255))
-    d.ellipse([cx - 38*s, cy + 44*s, cx + 38*s, cy + 54*s], fill=(141, 110, 99, 255))
+    # Velvet lining interior
+    d.chord([cx - 46*s, cy - 22*s, cx + 46*s, cy + 24*s], start=0, end=180, fill=(190, 18, 60, 255))
+    # Golden Braided Wicker
+    d.chord([cx - 48*s, cy - 20*s, cx + 48*s, cy + 28*s], start=0, end=180, fill=(217, 119, 6, 255))
+    d.chord([cx - 44*s, cy - 16*s, cx + 44*s, cy + 24*s], start=0, end=180, fill=(251, 191, 36, 255))
 
-    if stage == 1:
-        d.line([(cx, cy + 46*s), (cx, cy + 18*s)], fill=(109, 76, 65, 255), width=6*s)
-        d.polygon([(cx, cy + 24*s), (cx - 18*s, cy + 12*s), (cx - 6*s, cy + 24*s)], fill=(102, 187, 106, 255))
-        d.polygon([(cx, cy + 20*s), (cx + 18*s, cy + 8*s), (cx + 6*s, cy + 20*s)], fill=(129, 199, 132, 255))
-        d.ellipse([cx - 4*s, cy + 10*s, cx + 4*s, cy + 18*s], fill=(229, 57, 53, 255))
+    # Royal Golden Rim with Ruby Gems
+    d.rounded_rectangle([cx - 54*s, cy - 26*s, cx + 54*s, cy - 14*s], radius=6*s, fill=(245, 158, 11, 255), outline=(254, 240, 138, 255), width=2*s)
+    for rx in [-36, -18, 0, 18, 36]:
+        d.ellipse([cx + rx*s - 3*s, cy - 23*s, cx + rx*s + 3*s, cy - 17*s], fill=(225, 29, 72, 255))
 
-    elif stage == 2:
-        d.line([(cx, cy + 46*s), (cx, cy + 10*s)], fill=(109, 76, 65, 255), width=10*s)
-        d.ellipse([cx - 32*s, cy - 28*s, cx + 32*s, cy + 18*s], fill=(67, 160, 71, 255))
-        d.ellipse([cx - 24*s, cy - 22*s, cx + 24*s, cy + 10*s], fill=(76, 175, 80, 255))
-        for ax, ay in [(-12, -4), (14, 2)]:
-            d.ellipse([cx + ax*s - 5*s, cy + ay*s - 5*s, cx + ax*s + 5*s, cy + ay*s + 5*s], fill=(229, 57, 53, 255))
+    # Golden Ribbon Bow on Front
+    d.polygon([(cx - 10*s, cy - 8*s), (cx - 18*s, cy - 16*s), (cx - 12*s, cy), (cx, cy - 4*s)], fill=(234, 179, 8, 255))
+    d.polygon([(cx + 10*s, cy - 8*s), (cx + 18*s, cy - 16*s), (cx + 12*s, cy), (cx, cy - 4*s)], fill=(234, 179, 8, 255))
+    d.ellipse([cx - 4*s, cy - 8*s, cx + 4*s, cy], fill=(225, 29, 72, 255))
 
-    elif stage == 3:
-        d.polygon([(cx - 8*s, cy + 46*s), (cx + 8*s, cy + 46*s), (cx + 5*s, cy), (cx - 5*s, cy)], fill=(109, 76, 65, 255))
-        d.line([(cx, cy + 6*s), (cx - 18*s, cy - 10*s)], fill=(109, 76, 65, 255), width=6*s)
-        d.line([(cx, cy + 6*s), (cx + 18*s, cy - 10*s)], fill=(109, 76, 65, 255), width=6*s)
-        d.ellipse([cx - 42*s, cy - 32*s, cx + 8*s, cy + 12*s], fill=(56, 142, 60, 255))
-        d.ellipse([cx - 8*s, cy - 32*s, cx + 42*s, cy + 12*s], fill=(67, 160, 71, 255))
-        d.ellipse([cx - 26*s, cy - 42*s, cx + 26*s, cy - 2*s], fill=(76, 175, 80, 255))
-        for ax, ay in [(-20, -10), (0, -22), (20, -6)]:
-            d.ellipse([cx + ax*s - 6*s, cy + ay*s - 6*s, cx + ax*s + 6*s, cy + ay*s + 6*s], fill=(229, 57, 53, 255))
-
-    elif stage == 4:
-        d.polygon([(cx - 12*s, cy + 46*s), (cx + 12*s, cy + 46*s), (cx + 7*s, cy - 8*s), (cx - 7*s, cy - 8*s)], fill=(93, 64, 55, 255))
-        d.ellipse([cx - 48*s, cy - 36*s, cx + 12*s, cy + 14*s], fill=(46, 125, 50, 255))
-        d.ellipse([cx - 12*s, cy - 36*s, cx + 48*s, cy + 14*s], fill=(56, 142, 60, 255))
-        d.ellipse([cx - 36*s, cy - 48*s, cx + 36*s, cy - 2*s], fill=(67, 160, 71, 255))
-        for ax, ay in [(-26, -12), (-8, -28), (12, -26), (26, -8)]:
-            d.ellipse([cx + ax*s - 6*s, cy + ay*s - 6*s, cx + ax*s + 6*s, cy + ay*s + 6*s], fill=(229, 57, 53, 255))
-
-    elif stage == 5:
-        d.ellipse([cx - 54*s, cy - 54*s, cx + 54*s, cy + 20*s], fill=(255, 238, 88, 70))
-        d.polygon([(cx - 14*s, cy + 46*s), (cx + 14*s, cy + 46*s), (cx + 8*s, cy - 12*s), (cx - 8*s, cy - 12*s)], fill=(93, 64, 55, 255))
-        d.ellipse([cx - 52*s, cy - 42*s, cx + 16*s, cy + 14*s], fill=(46, 125, 50, 255))
-        d.ellipse([cx - 16*s, cy - 42*s, cx + 52*s, cy + 14*s], fill=(56, 142, 60, 255))
-        d.ellipse([cx - 38*s, cy - 52*s, cx + 38*s, cy - 4*s], fill=(67, 160, 71, 255))
-        for fx, fy in [(-30, -32), (-12, -10), (14, -36), (32, -14)]:
-            d.ellipse([cx + fx*s - 4*s, cy + fy*s - 4*s, cx + fx*s + 4*s, cy + fy*s + 4*s], fill=(255, 128, 171, 255))
-        for gx, gy in [(-28, -8), (-16, -26), (4, -36), (20, -22), (30, -4)]:
-            d.ellipse([cx + gx*s - 7*s, cy + gy*s - 7*s, cx + gx*s + 7*s, cy + gy*s + 7*s], fill=(255, 215, 0, 255))
-            d.ellipse([cx + gx*s - 2*s, cy + gy*s - 5*s, cx + gx*s + 3*s, cy + gy*s], fill=(255, 255, 255, 220))
-
-    return finalize(img, w, h)
-
-# ==============================================================================
-# PARTICLE & FEEDBACK MARKERS
-# ==============================================================================
-
-def draw_sparkle(w=32, h=32):
-    img = make_canvas(w, h)
-    d = ImageDraw.Draw(img)
-    s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
-
-    d.ellipse([cx - 12*s, cy - 12*s, cx + 12*s, cy + 12*s], fill=(255, 213, 79, 100))
-
-    r = 15 * s
-    pts = [(cx, cy - r), (cx + 3*s, cy), (cx, cy + r), (cx - 3*s, cy)]
-    d.polygon(pts, fill=(255, 255, 255, 255))
-    pts_h = [(cx - r, cy), (cx, cy + 3*s), (cx + r, cy), (cx, cy - 3*s)]
-    d.polygon(pts_h, fill=(255, 255, 255, 255))
-
-    rd = 8 * s
-    for angle in [45, 135, 225, 315]:
-        rad = math.radians(angle)
-        dx, dy = rd * math.cos(rad), rd * math.sin(rad)
-        d.line([(cx, cy), (cx + dx, cy + dy)], fill=(255, 245, 157, 230), width=2*s)
-
-    d.ellipse([cx - 2.5*s, cy - 2.5*s, cx + 2.5*s, cy + 2.5*s], fill=(255, 255, 255, 255))
-    return finalize(img, w, h)
-
-def draw_check_mark(w=48, h=48):
-    img = make_canvas(w, h)
-    d = ImageDraw.Draw(img)
-    s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
-    r = 21 * s
-
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(46, 125, 50, 255))
-    pts = [(cx - 10*s, cy + 1*s), (cx - 3*s, cy + 8*s), (cx + 10*s, cy - 7*s)]
-    d.line(pts, fill=(255, 255, 255, 255), width=5*s, joint="curve")
-    return finalize(img, w, h)
-
-def draw_x_mark(w=48, h=48):
-    img = make_canvas(w, h)
-    d = ImageDraw.Draw(img)
-    s = SCALE
-    cx, cy = (w * s) / 2, (h * s) / 2
-    r = 21 * s
-
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(211, 47, 47, 255))
-    d.line([(cx - 9*s, cy - 9*s), (cx + 9*s, cy + 9*s)], fill=(255, 255, 255, 255), width=5*s)
-    d.line([(cx + 9*s, cy - 9*s), (cx - 9*s, cy + 9*s)], fill=(255, 255, 255, 255), width=5*s)
     return finalize(img, w, h)
 
 def draw_card_panel(w=96, h=96):
     img = make_canvas(w, h)
     d = ImageDraw.Draw(img)
     s = SCALE
-
-    pad = 4 * s
-    d.rounded_rectangle([pad, pad, w*s - pad, h*s - pad], radius=12*s, fill=(255, 253, 231, 255))
-    d.rounded_rectangle([pad, pad, w*s - pad, h*s - pad], radius=12*s, outline=(255, 179, 0, 255), width=4*s)
+    d.rounded_rectangle([4*s, 4*s, (w-4)*s, (h-4)*s], radius=14*s, fill=(255, 255, 255, 255), outline=(2, 132, 199, 255), width=3*s)
     return finalize(img, w, h)
 
 # ==============================================================================
-# ATLAS PACKER (Shelf Packing Algorithm with 4px Gutters)
+# ENCHANTED ROYAL ORCHARD TREE STAGES (128x128 px)
 # ==============================================================================
 
-def generate_and_pack_atlas(output_dir):
+def draw_tree_stage(stage, w=128, h=128):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx = (w * s) / 2
+
+    # Trunk
+    d.rounded_rectangle([cx - 10*s, 64*s, cx + 10*s, 114*s], radius=4*s, fill=(120, 53, 15, 255))
+    # Roots / Grassy Mound
+    d.chord([cx - 32*s, 100*s, cx + 32*s, 124*s], start=0, end=180, fill=(34, 197, 94, 255))
+
+    # Canopy (Lush Emerald & Mint Green Clouds)
+    d.ellipse([cx - 38*s, 24*s, cx + 38*s, 76*s], fill=(22, 163, 74, 255))
+    d.ellipse([cx - 44*s, 34*s, cx - 4*s, 78*s], fill=(34, 197, 94, 255))
+    d.ellipse([cx + 4*s, 34*s, cx + 44*s, 78*s], fill=(34, 197, 94, 255))
+    d.ellipse([cx - 26*s, 14*s, cx + 26*s, 56*s], fill=(74, 222, 128, 255))
+
+    # Fairy Blossoms & Jewel Fruits based on stage (1 to 5)
+    fruit_spots = [
+        (cx - 16*s, 44*s),
+        (cx + 18*s, 42*s),
+        (cx, 28*s),
+        (cx - 24*s, 60*s),
+        (cx + 22*s, 62*s)
+    ]
+    for i in range(min(stage, 5)):
+        fx, fy = fruit_spots[i]
+        # Golden Apple / Jewel Fruit with Sparkle
+        d.ellipse([fx - 8*s, fy - 8*s, fx + 8*s, fy + 8*s], fill=(239, 68, 68, 255))
+        d.ellipse([fx - 6*s, fy - 6*s, fx - 2*s, fy - 2*s], fill=(254, 205, 211, 220))
+        d.point((fx - 1*s, fy - 9*s), fill=(34, 197, 94, 255))
+        # Fairy glow
+        d.ellipse([fx - 12*s, fy - 12*s, fx + 12*s, fy + 12*s], outline=(254, 240, 138, 140), width=2*s)
+
+    # Glowing lantern for stage 4 and 5
+    if stage >= 4:
+        lx, ly = cx - 28*s, 70*s
+        d.line([(lx, 64*s), (lx, ly)], fill=(251, 191, 36, 255), width=2*s)
+        d.ellipse([lx - 4*s, ly - 4*s, lx + 4*s, ly + 6*s], fill=(254, 240, 138, 255))
+
+    return finalize(img, w, h)
+
+# ==============================================================================
+# BUTTONS, STARS & PARTICLES
+# ==============================================================================
+
+def draw_btn_pause(w=64, h=64):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    d.ellipse([2*s, 2*s, (w-2)*s, (h-2)*s], fill=(2, 132, 199, 255), outline=(255, 255, 255, 255), width=2*s)
+    cx, cy = (w*s)/2, (h*s)/2
+    d.rounded_rectangle([cx - 8*s, cy - 12*s, cx - 3*s, cy + 12*s], radius=2*s, fill=(255, 255, 255, 255))
+    d.rounded_rectangle([cx + 3*s, cy - 12*s, cx + 8*s, cy + 12*s], radius=2*s, fill=(255, 255, 255, 255))
+    return finalize(img, w, h)
+
+def draw_btn_sound(w=64, h=64):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    d.ellipse([2*s, 2*s, (w-2)*s, (h-2)*s], fill=(2, 132, 199, 255), outline=(255, 255, 255, 255), width=2*s)
+    cx, cy = (w*s)/2, (h*s)/2
+    # Speaker cone
+    d.polygon([(cx - 10*s, cy - 6*s), (cx - 4*s, cy - 6*s), (cx + 4*s, cy - 12*s),
+               (cx + 4*s, cy + 12*s), (cx - 4*s, cy + 6*s), (cx - 10*s, cy + 6*s)], fill=(255, 255, 255, 255))
+    d.arc([cx + 2*s, cy - 8*s, cx + 12*s, cy + 8*s], start=300, end=60, fill=(255, 255, 255, 255), width=2*s)
+    return finalize(img, w, h)
+
+def draw_btn_sound_off(w=64, h=64):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    d.ellipse([2*s, 2*s, (w-2)*s, (h-2)*s], fill=(148, 163, 184, 255), outline=(255, 255, 255, 255), width=2*s)
+    cx, cy = (w*s)/2, (h*s)/2
+    d.polygon([(cx - 10*s, cy - 6*s), (cx - 4*s, cy - 6*s), (cx + 4*s, cy - 12*s),
+               (cx + 4*s, cy + 12*s), (cx - 4*s, cy + 6*s), (cx - 10*s, cy + 6*s)], fill=(255, 255, 255, 255))
+    d.line([(cx - 10*s, cy + 12*s), (cx + 12*s, cy - 10*s)], fill=(239, 68, 68, 255), width=3*s)
+    return finalize(img, w, h)
+
+def draw_btn_replay(w=64, h=64):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    d.ellipse([2*s, 2*s, (w-2)*s, (h-2)*s], fill=(16, 185, 129, 255), outline=(255, 255, 255, 255), width=2*s)
+    cx, cy = (w*s)/2, (h*s)/2
+    d.arc([cx - 12*s, cy - 12*s, cx + 12*s, cy + 12*s], start=45, end=300, fill=(255, 255, 255, 255), width=3*s)
+    d.polygon([(cx + 8*s, cy - 16*s), (cx + 16*s, cy - 8*s), (cx + 6*s, cy - 6*s)], fill=(255, 255, 255, 255))
+    return finalize(img, w, h)
+
+def draw_btn_home(w=64, h=64):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    d.ellipse([2*s, 2*s, (w-2)*s, (h-2)*s], fill=(139, 92, 246, 255), outline=(255, 255, 255, 255), width=2*s)
+    cx, cy = (w*s)/2, (h*s)/2
+    d.polygon([(cx, cy - 14*s), (cx - 14*s, cy), (cx + 14*s, cy)], fill=(255, 255, 255, 255))
+    d.rectangle([cx - 10*s, cy, cx + 10*s, cy + 12*s], fill=(255, 255, 255, 255))
+    d.rectangle([cx - 4*s, cy + 3*s, cx + 4*s, cy + 12*s], fill=(139, 92, 246, 255))
+    return finalize(img, w, h)
+
+def draw_star(is_full, w=48, h=48):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2
+    pts = []
+    for i in range(10):
+        angle = -math.pi / 2 + (i * math.pi / 5)
+        r = (20*s) if i % 2 == 0 else (9*s)
+        pts.append((cx + r * math.cos(angle), cy + r * math.sin(angle)))
+
+    if is_full:
+        d.polygon(pts, fill=(251, 191, 36, 255), outline=(217, 119, 6, 255))
+        d.ellipse([cx - 6*s, cy - 6*s, cx, cy], fill=(254, 240, 138, 220))
+    else:
+        d.polygon(pts, fill=(226, 232, 240, 255), outline=(148, 163, 184, 255))
+    return finalize(img, w, h)
+
+def draw_crown_star(is_full, w=48, h=48):
+    """Princess Royal Crown Badge"""
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2 + (2*s)
+
+    crown_pts = [
+        (cx - 18*s, cy + 10*s),
+        (cx - 18*s, cy - 8*s),
+        (cx - 10*s, cy + 2*s),
+        (cx, cy - 14*s), # High central peak
+        (cx + 10*s, cy + 2*s),
+        (cx + 18*s, cy - 8*s),
+        (cx + 18*s, cy + 10*s)
+    ]
+
+    if is_full:
+        d.polygon(crown_pts, fill=(251, 191, 36, 255), outline=(217, 119, 6, 255))
+        d.rounded_rectangle([cx - 20*s, cy + 8*s, cx + 20*s, cy + 14*s], radius=2*s, fill=(245, 158, 11, 255))
+        d.ellipse([cx - 3*s, cy - 4*s, cx + 3*s, cy + 2*s], fill=(225, 29, 72, 255))
+        d.ellipse([cx - 1*s, cy - 15*s, cx + 1*s, cy - 13*s], fill=(255, 255, 255, 255))
+    else:
+        d.polygon(crown_pts, fill=(226, 232, 240, 255), outline=(148, 163, 184, 255))
+        d.rounded_rectangle([cx - 20*s, cy + 8*s, cx + 20*s, cy + 14*s], radius=2*s, fill=(203, 213, 225, 255))
+    return finalize(img, w, h)
+
+def draw_check_mark(w=48, h=48):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2
+    d.ellipse([3*s, 3*s, (w-3)*s, (h-3)*s], fill=(16, 185, 129, 255))
+    d.line([(cx - 10*s, cy), (cx - 2*s, cy + 8*s), (cx + 12*s, cy - 8*s)], fill=(255, 255, 255, 255), width=4*s)
+    return finalize(img, w, h)
+
+def draw_x_mark(w=48, h=48):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2
+    d.ellipse([3*s, 3*s, (w-3)*s, (h-3)*s], fill=(239, 68, 68, 255))
+    d.line([(cx - 8*s, cy - 8*s), (cx + 8*s, cy + 8*s)], fill=(255, 255, 255, 255), width=4*s)
+    d.line([(cx + 8*s, cy - 8*s), (cx - 8*s, cy + 8*s)], fill=(255, 255, 255, 255), width=4*s)
+    return finalize(img, w, h)
+
+def draw_sparkle(w=32, h=32):
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2
+    pts = [
+        (cx, cy - 14*s), (cx + 4*s, cy - 4*s), (cx + 14*s, cy),
+        (cx + 4*s, cy + 4*s), (cx, cy + 14*s), (cx - 4*s, cy + 4*s),
+        (cx - 14*s, cy), (cx - 4*s, cy - 4*s)
+    ]
+    d.polygon(pts, fill=(251, 191, 36, 255))
+    d.ellipse([cx - 3*s, cy - 3*s, cx + 3*s, cy + 3*s], fill=(255, 255, 255, 255))
+    return finalize(img, w, h)
+
+def draw_petal(w=32, h=32):
+    """Floating Pink Cherry Blossom Petal for Cozy Atmosphere"""
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2
+    d.ellipse([cx - 12*s, cy - 6*s, cx + 12*s, cy + 6*s], fill=(251, 207, 232, 220))
+    d.ellipse([cx - 8*s, cy - 4*s, cx + 8*s, cy + 4*s], fill=(244, 114, 182, 180))
+    return finalize(img, w, h)
+
+def draw_firefly(w=24, h=24):
+    """Golden Glowing Magical Mote"""
+    img = make_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    s = SCALE
+    cx, cy = (w*s)/2, (h*s)/2
+    d.ellipse([cx - 10*s, cy - 10*s, cx + 10*s, cy + 10*s], fill=(254, 240, 138, 100))
+    d.ellipse([cx - 6*s, cy - 6*s, cx + 6*s, cy + 6*s], fill=(253, 224, 71, 200))
+    d.ellipse([cx - 3*s, cy - 3*s, cx + 3*s, cy + 3*s], fill=(255, 255, 255, 255))
+    return finalize(img, w, h)
+
+# ==============================================================================
+# TEXTURE ATLAS PACKER (1024x1024)
+# ==============================================================================
+
+def generate_and_pack_atlas(output_dir="public/assets"):
     os.makedirs(output_dir, exist_ok=True)
-    atlas_w, atlas_h = 1024, 512
+
+    atlas_w, atlas_h = 1024, 1024
     atlas_img = Image.new("RGBA", (atlas_w, atlas_h), (0, 0, 0, 0))
-    padding = 4
+    padding = 6
 
     sprites = [
+        # Princess Penelope Character Animations (96x128)
+        ("princess-idle-1", draw_princess(96, 128, "idle1")),
+        ("princess-idle-2", draw_princess(96, 128, "idle2")),
+        ("princess-catch", draw_princess(96, 128, "catch")),
+        ("princess-think", draw_princess(96, 128, "think")),
         # Orchard stages (128x128)
-        ("tree-stage-1", draw_tree_stage(1)),
-        ("tree-stage-2", draw_tree_stage(2)),
-        ("tree-stage-3", draw_tree_stage(3)),
-        ("tree-stage-4", draw_tree_stage(4)),
-        ("tree-stage-5", draw_tree_stage(5)),
-        # Basket Catcher (128x64)
+        ("tree-stage-1", draw_tree_stage(1, 128, 128)),
+        ("tree-stage-2", draw_tree_stage(2, 128, 128)),
+        ("tree-stage-3", draw_tree_stage(3, 128, 128)),
+        ("tree-stage-4", draw_tree_stage(4, 128, 128)),
+        ("tree-stage-5", draw_tree_stage(5, 128, 128)),
+        # Baskets (128x64)
         ("basket", draw_basket(128, 64)),
+        ("basket-royal", draw_basket_royal(128, 64)),
         # Card Panel (96x96)
         ("card-panel", draw_card_panel(96, 96)),
-        # 12 Fruits (80x80)
+        # 12 Storybook Fruits with Cute Faces (80x80)
         ("apple", draw_apple(80, 80)),
         ("orange", draw_orange(80, 80)),
         ("grape", draw_grape(80, 80)),
@@ -610,12 +744,16 @@ def generate_and_pack_atlas(output_dir):
         ("btn-replay", draw_btn_replay(64, 64)),
         ("btn-home", draw_btn_home(64, 64)),
         # Stars & Markers (48x48)
-        ("star-full", draw_star_full(48, 48)),
-        ("star-empty", draw_star_empty(48, 48)),
+        ("star-full", draw_star(True, 48, 48)),
+        ("star-empty", draw_star(False, 48, 48)),
+        ("crown-star-full", draw_crown_star(True, 48, 48)),
+        ("crown-star-empty", draw_crown_star(False, 48, 48)),
         ("check-mark", draw_check_mark(48, 48)),
         ("x-mark", draw_x_mark(48, 48)),
-        # Sparkle (32x32)
+        # Atmospheric Particles (32x32 / 24x24)
         ("sparkle", draw_sparkle(32, 32)),
+        ("petal", draw_petal(32, 32)),
+        ("firefly", draw_firefly(24, 24)),
     ]
 
     frames_json = {}
@@ -651,7 +789,7 @@ def generate_and_pack_atlas(output_dir):
         "frames": frames_json,
         "meta": {
             "app": "CatchTheFruit-AtlasPacker",
-            "version": "1.0",
+            "version": "2.0-PrincessPants",
             "image": "atlas.png",
             "format": "RGBA8888",
             "size": {"w": atlas_w, "h": atlas_h},

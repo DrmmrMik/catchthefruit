@@ -30,14 +30,22 @@ export class MenuScene extends Phaser.Scene {
   async create(): Promise<void> {
     this.cameras.main.setBackgroundColor('#f0f9ff');
     const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    // Background Image with gentle wash
+    if (this.textures.exists('background')) {
+      const bg = this.add.image(width / 2, height / 2, 'background');
+      bg.setDisplaySize(width, height);
+      bg.setAlpha(0.28);
+    }
 
     // Header Background
     const headerBg = this.add.graphics();
-    headerBg.fillStyle(0x0284c7, 1);
+    headerBg.fillStyle(0x0284c7, 0.95);
     headerBg.fillRect(0, 0, width, 110);
 
     // Title text
-    this.add.text(width / 2, 38, '🍎 Catch the Fruit! 🍇', {
+    this.add.text(width / 2, 38, '👑 Princess Penelope 🍎', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '24px',
       color: '#ffffff',
@@ -45,7 +53,7 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Subtitle
-    this.add.text(width / 2, 70, '2nd Grade ELA & Math Orchard', {
+    this.add.text(width / 2, 70, 'Princesses Wear Pants • Royal Orchard', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '13px',
       color: '#bae6fd'
@@ -179,9 +187,9 @@ export class MenuScene extends Phaser.Scene {
       // Star Badges or Locked Label
       if (isUnlocked) {
         for (let s = 0; s < 3; s++) {
-          const starFrame = s < stars ? 'star-full' : 'star-empty';
+          const starFrame = s < stars ? 'crown-star-full' : 'crown-star-empty';
           const star = this.add.image(130 + s * 22, -20, 'atlas', starFrame);
-          star.setDisplaySize(20, 20);
+          star.setDisplaySize(22, 22);
           levelCard.add(star);
         }
 
@@ -221,15 +229,15 @@ export class MenuScene extends Phaser.Scene {
     const orchardBottomBtn = this.add.container(width / 2, 750);
     const bottomBg = this.add.graphics();
     bottomBg.fillStyle(0x10b981, 1);
-    bottomBg.fillRoundedRect(-160, -24, 320, 48, 24);
-    const bottomText = this.add.text(0, 0, '🌳 View Fruit Orchard Progress', {
+    bottomBg.fillRoundedRect(-165, -24, 330, 48, 24);
+    const bottomText = this.add.text(0, 0, '👑 Penelope\'s Enchanted Orchard 🌳', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
     orchardBottomBtn.add([bottomBg, bottomText]);
-    orchardBottomBtn.setSize(320, 48);
+    orchardBottomBtn.setSize(330, 48);
     orchardBottomBtn.setInteractive({ useHandCursor: true });
     orchardBottomBtn.on('pointerdown', () => {
       audioService.playClick();

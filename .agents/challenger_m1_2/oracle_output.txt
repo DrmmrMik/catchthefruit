@@ -37,9 +37,10 @@ Inspecting dist/icons/maskable-512x512.png: dimensions=512x512, mode=RGBA
   [PASS] dist/icons/maskable-512x512.png outer 8% margin is 100% full-bleed opaque (alpha=255 for all 77244 pixels)
 
 --- TEST 2: TEXTURE ATLAS BOUNDING BOXES & TOUCH TARGETS ---
-Actual atlas.png dimensions: 1024x512, mode=RGBA
-atlas.json meta.size: 1024x512
-Total frame entries in atlas.json: 29
+Actual atlas.png dimensions: 1024x1024, mode=RGBA
+atlas.json meta.size: 1024x1024
+Total frame entries in atlas.json: 38
+  [WARN] Expected exactly 29 frames, got 38
 Checking 12 curriculum fruits...
   Fruit 'apple': 80x80px (>= 48px requirement satisfied)
   Fruit 'orange': 80x80px (>= 48px requirement satisfied)
@@ -54,19 +55,19 @@ Checking 12 curriculum fruits...
   Fruit 'plum': 80x80px (>= 48px requirement satisfied)
   Fruit 'cherry': 80x80px (>= 48px requirement satisfied)
 Checking bounding box pairwise non-overlap across all frames...
-  [PASS] Zero bounding box overlaps found across all 29 frames! Minimum gutter: 4px
+  [PASS] Zero bounding box overlaps found across all 38 frames! Minimum gutter: 6px
 
 --- TEST 3: SERVICE WORKER & PRECACHE VERIFICATION ---
 Checking for forbidden cache.addAll( calls in sw.js...
   [PASS] No 'cache.addAll(' found in sw.js.
 Verifying precached assets exist in dist/ directory...
 Found 7 asset references in sw.js: ['./icons/icon-192x192.png', './icons/icon-512x512.png', './icons/maskable-192x192.png', './icons/maskable-512x512.png', './index.html', './manifest.json', './screenshots/mobile-1.png']
-  Asset './icons/icon-512x512.png' verified in dist/ (63596 bytes)
   Asset './icons/icon-192x192.png' verified in dist/ (28435 bytes)
-  Asset './index.html' verified in dist/ (3800 bytes)
-  Asset './screenshots/mobile-1.png' verified in dist/ (19308 bytes)
   Asset './manifest.json' verified in dist/ (1343 bytes)
+  Asset './icons/icon-512x512.png' verified in dist/ (63596 bytes)
   Asset './icons/maskable-192x192.png' verified in dist/ (28473 bytes)
+  Asset './screenshots/mobile-1.png' verified in dist/ (19308 bytes)
+  Asset './index.html' verified in dist/ (3800 bytes)
   Asset './icons/maskable-512x512.png' verified in dist/ (64072 bytes)
   [PASS] All 7 precache asset paths physically exist in dist/!
 
@@ -81,6 +82,6 @@ Found 7 asset references in sw.js: ['./icons/icon-192x192.png', './icons/icon-51
   VERIFICATION SUMMARY
 =================================================================
 Total Errors: 0
-Total Warnings: 2
+Total Warnings: 3
 
 VERDICT: APPROVE

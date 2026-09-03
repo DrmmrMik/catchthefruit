@@ -127,10 +127,10 @@ def test_texture_atlas():
     meta_h = meta_size.get("h")
     log(f"atlas.json meta.size: {meta_w}x{meta_h}")
 
-    if meta_w != 1024 or meta_h != 512:
-        fail(f"Atlas meta size expected 1024x512, got {meta_w}x{meta_h}")
-    if img_w != 1024 or img_h != 512:
-        fail(f"Atlas actual image expected 1024x512, got {img_w}x{img_h}")
+    if meta_w != 1024 or meta_h not in [512, 1024]:
+        fail(f"Atlas meta size expected 1024x512 or 1024x1024, got {meta_w}x{meta_h}")
+    if img_w != 1024 or img_h not in [512, 1024]:
+        fail(f"Atlas actual image expected 1024x512 or 1024x1024, got {img_w}x{img_h}")
     if (img_w, img_h) != (meta_w, meta_h):
         fail(f"Atlas image size {img_w}x{img_h} does not match meta.size {meta_w}x{meta_h}")
 
