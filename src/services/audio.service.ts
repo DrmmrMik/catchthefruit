@@ -47,63 +47,132 @@ const COMBO_PENTATONIC = [
 /**
  * Normalizes phonetic symbols, slashes, and affix notations for natural TTS pronunciation.
  * Replaces dictionary notation (e.g. /ē/, /ĕ/, /ā/, /är/) with their natural phoneme words,
- * so browser speech engines do not utter the word "slash".
+/**
+ * Carefully converts curriculum questions, phonics patterns, affixes, math equations,
+ * and phonetic notations into natural, pedagogically sound spoken English for 2nd graders.
+ * 
+ * Rules:
+ * 1. Letters vs Words:
+ *    - Letter spelling patterns in quotes (e.g. 'ai', 'ay', 'ea', 'ee', 'oa', 'ar') are spelled out as individual letter names: "A I", "E A", etc.
+ *    - Lists of vowel teams or r-controlled vowels ('ee, ie, oa, and ui') are spelled out: "E E, I E, O A, and U I".
+ *    - Single letters in quotes (e.g. 'a', 's') are spoken as letter names: "A", "S".
+ *    - Whole English words in quotes (e.g. 'rain', 'beach', 'bread', 'star', 'replay', 'happy', 'large') have quotes removed so browser TTS pronounces them as natural words without pausing or stumbling.
+ * 2. Phonetic Symbols vs Special Characters:
+ *    - Long vowel notation /ā/, /ē/, /ī/, /ō/, /ū/ -> "long A", "long E", etc.
+ *    - Short vowel notation /ă/, /ĕ/, /ĭ/, /ŏ/, /ŭ/ -> "short E", etc.
+ *    - R-controlled sounds /är/ -> "ar", /ôr/ -> "or", /ẽr/ -> "er".
+ *    - All dictionary slashes are converted or removed; TTS NEVER utters the word "slash".
+ * 3. Morphology & Affixes:
+ *    - Prefixes 're-', 'un-', 'dis-', 'pre-' -> "R E", "U N", "D I S", "P R E".
+ *    - Suffixes '-ed', '-ing', '-ful', '-less', '-ly', '-er', '-est' -> "-E D", "-I N G", etc.
+ *    - Suffix slash -s/-es -> "-S or -E S".
+ *    - Morphological segmentation equations "re + play → replay" -> "R E plus play makes replay".
+ * 4. Math Equations & Symbols:
+ *    - "8 + 6 = ?" -> "What is 8 plus 6?"
+ *    - "15 - 7 = ?" -> "What is 15 minus 7?"
+ *    - "10, 20, 30, ?" -> "10, 20, 30, what comes next?"
+ *    - "(+ or -)" -> "(plus or minus)".
+ *    - Elimination of "equals question mark" or robotic symbol reading.
  */
 export function normalizePhoneticsForSpeech(text: string): string {
   if (!text) return '';
 
   let speech = text;
 
-  // 1. Long vowels preceded by 'long' or standalone
-  // e.g. "long /ē/" -> "long E", "/ē/" -> "long E"
-  speech = speech.replace(/\blong\s+\/([āaA])\//gi, 'long A');
-  speech = speech.replace(/\blong\s+\/([ēeE])\//gi, 'long E');
-  speech = speech.replace(/\blong\s+\/([īiI])\//gi, 'long I');
-  speech = speech.replace(/\blong\s+\/([ōoO])\//gi, 'long O');
-  speech = speech.replace(/\blong\s+\/([ūuU])\//gi, 'long U');
+  // 1. Math equations conversion to natural spoken questions
+  speech = speech.replace(/(\d+)\s*\+\s*(\d+)\s*=\s*\?/g, 'What is $1 plus $2?');
+  speech = speech.replace(/(\d+)\s*-\s*(\d+)\s*=\s*\?/g, 'What is $1 minus $2?');
+  speech = speech.replace(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*\?/g, '$1, $2, $3, what comes next?');
+  speech = speech.replace(/\s*=\s*\?/g, ' equals what?');
+  speech = speech.replace(/\s*=\s*/g, ' equals ');
+  speech = speech.replace(/\s*(\u2192|->)\s*/g, ' makes ');
+  speech = speech.replace(/\(\+\s*or\s*-\)/gi, '(plus or minus)');
 
-  // 2. Short vowels preceded by 'short' or standalone
-  // e.g. "short /ĕ/" -> "short E", "/ĕ/" -> "short E"
-  speech = speech.replace(/\bshort\s+\/([ăaA])\//gi, 'short A');
-  speech = speech.replace(/\bshort\s+\/([ĕeE])\//gi, 'short E');
-  speech = speech.replace(/\bshort\s+\/([ĭiI])\//gi, 'short I');
-  speech = speech.replace(/\bshort\s+\/([ŏoO])\//gi, 'short O');
-  speech = speech.replace(/\bshort\s+\/([ŭuU])\//gi, 'short U');
+  // 2. Morphological visual segmentation (e.g. 're + play makes replay')
+  speech = speech.replace(/\bre\s*\+\s*([a-zA-Z]+)/gi, 'R E plus $1');
+  speech = speech.replace(/\bun\s*\+\s*([a-zA-Z]+)/gi, 'U N plus $1');
+  speech = speech.replace(/\bdis\s*\+\s*([a-zA-Z]+)/gi, 'D I S plus $1');
+  speech = speech.replace(/\bpre\s*\+\s*([a-zA-Z]+)/gi, 'P R E plus $1');
+  speech = speech.replace(/([a-zA-Z]+)\s*\+\s*([a-zA-Z]+)/g, '$1 plus $2');
 
-  // 3. Standalone phonetic vowel symbols with macrons (ā, ē, ī, ō, ū)
+  // 3. Prefixes in prompts: 're-' -> 'R E', 'un-' -> 'U N', etc.
+  speech = speech.replace(/['"]re-['"]/gi, 'R E');
+  speech = speech.replace(/['"]un-['"]/gi, 'U N');
+  speech = speech.replace(/['"]dis-['"]/gi, 'D I S');
+  speech = speech.replace(/['"]pre-['"]/gi, 'P R E');
+
+  // 4. Suffixes in prompts
+  speech = speech.replace(/-\s*s\s*\/\s*-\s*es/gi, '-S or -E S');
+  speech = speech.replace(/['"]?-ing['"]?/gi, '-I N G');
+  speech = speech.replace(/['"]?-ed['"]?/gi, '-E D');
+  speech = speech.replace(/['"]?-est['"]?/gi, '-E S T');
+  speech = speech.replace(/['"]?-ful['"]?/gi, '-F U L');
+  speech = speech.replace(/['"]?-less['"]?/gi, '-L E S S');
+  speech = speech.replace(/['"]?-ly['"]?/gi, '-L Y');
+  speech = speech.replace(/['"]?-er['"]?/gi, '-E R');
+  speech = speech.replace(/['"]?-es['"]?/gi, '-E S');
+  speech = speech.replace(/['"]?-s['"]?/gi, '-S');
+
+  // 5. Spelling patterns / Vowel teams & R-controlled vowels (spelled as individual letters)
+  const vowelTeams = ['ai', 'ay', 'ea', 'ee', 'ie', 'oa', 'oe', 'ui', 'ue', 'ar', 'er', 'ir', 'or', 'ur'];
+  for (const vt of vowelTeams) {
+    const spelled = vt.toUpperCase().split('').join(' ');
+    // Quoted pattern: 'ai' -> A I
+    speech = speech.replace(new RegExp(`['"]${vt}['"]`, 'gi'), spelled);
+    // In lists: 'ee, ie, oa' or 'and ui'
+    speech = speech.replace(new RegExp(`\\b${vt}\\b(?=,\\s*|\\s+and\\b|\\s+or\\b|\\s*!)`, 'gi'), spelled);
+    speech = speech.replace(new RegExp(`\\b(and|or)\\s+${vt}\\b`, 'gi'), `$1 ${spelled}`);
+  }
+
+  // 6. Phonetic sound symbols
+  // Long vowels
+  speech = speech.replace(/\blong\s+\/([āaA])\/?/gi, 'long A');
+  speech = speech.replace(/\blong\s+\/([ēeE])\/?/gi, 'long E');
+  speech = speech.replace(/\blong\s+\/([īiI])\/?/gi, 'long I');
+  speech = speech.replace(/\blong\s+\/([ōoO])\/?/gi, 'long O');
+  speech = speech.replace(/\blong\s+\/([ūuU])\/?/gi, 'long U');
+
+  // Short vowels
+  speech = speech.replace(/\bshort\s+\/([ăaA])\/?/gi, 'short A');
+  speech = speech.replace(/\bshort\s+\/([ĕeE])\/?/gi, 'short E');
+  speech = speech.replace(/\bshort\s+\/([ĭiI])\/?/gi, 'short I');
+  speech = speech.replace(/\bshort\s+\/([ŏoO])\/?/gi, 'short O');
+  speech = speech.replace(/\bshort\s+\/([ŭuU])\/?/gi, 'short U');
+
+  // Standalone with macron/breve
   speech = speech.replace(/\/([āA])\//g, 'long A');
   speech = speech.replace(/\/([ēE])\//g, 'long E');
   speech = speech.replace(/\/([īI])\//g, 'long I');
   speech = speech.replace(/\/([ōO])\//g, 'long O');
   speech = speech.replace(/\/([ūU])\//g, 'long U');
 
-  // 4. Standalone phonetic vowel symbols with breves (ă, ĕ, ĭ, ŏ, ŭ)
   speech = speech.replace(/\/([ă])\//g, 'short A');
   speech = speech.replace(/\/([ĕ])\//g, 'short E');
   speech = speech.replace(/\/([ĭ])\//g, 'short I');
   speech = speech.replace(/\/([ŏ])\//g, 'short O');
   speech = speech.replace(/\/([ŭ])\//g, 'short U');
 
-  // 5. R-controlled vowels
+  // R-controlled sounds
   speech = speech.replace(/\/är\/|\/ar\//gi, 'ar');
   speech = speech.replace(/\/ôr\/|\/or\//gi, 'or');
   speech = speech.replace(/\/ẽr\/|\/er\/|\/ir\/|\/ur\//gi, 'er');
 
-  // 6. Double-o sounds (/oo/, /ōō/, /o͝o/)
+  // Double-o sounds (/oo/, /ōō/, /o͝o/)
   speech = speech.replace(/\/(oo|ōō|o͝o)\//gi, 'oo');
 
-  // 7. Affix slashes (e.g. -s / -es, -s/-es)
-  speech = speech.replace(/-\s*s\s*\/\s*-\s*es/gi, '-s or -es');
-  speech = speech.replace(/(\w+)\s*\/\s*(\w+)/g, '$1 or $2');
-
-  // 8. Any other enclosed phoneme pattern like /ch/, /sh/, /th/ -> ch, sh, th
+  // Clean any remaining /sound/ -> sound
   speech = speech.replace(/\/([^\/\s]+)\//g, '$1');
 
-  // 9. Any stray standalone forward slash
+  // 7. Remove single quotes around whole English words so TTS pronounces them as normal words
+  speech = speech.replace(/['"]([a-zA-Z]{2,})['"]/g, '$1');
+
+  // 8. Slashes between words
   speech = speech.replace(/\s*\/\s*/g, ' or ');
   speech = speech.replace(/\//g, ' ');
 
-  return speech.trim();
+  // Clean up whitespace
+  speech = speech.replace(/\s+/g, ' ').trim();
+  return speech;
 }
 
 export class AudioService implements IAudioSynthesizer {

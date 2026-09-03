@@ -314,7 +314,7 @@ describe('AudioService - Procedural Audio & Web Speech API (Milestone 3)', () =>
       const callArgs = speakMock.mock.calls[0];
       expect(callArgs).toBeDefined();
       const utterance = callArgs![0] as SpeechSynthesisUtterance;
-      expect(utterance.text).toBe("Catch words with 'ea' that say long E!");
+      expect(utterance.text).toBe("Catch words with E A that say long E!");
       expect(utterance.rate).toBe(0.9);
       expect(utterance.pitch).toBe(1.0);
       expect(utterance.voice?.lang).toBe('en-US');
@@ -334,26 +334,58 @@ describe('AudioService - Procedural Audio & Web Speech API (Milestone 3)', () =>
 
     it('normalizes phonetic symbols so TTS speaks phonemes without saying "slash"', async () => {
       // Test the normalization utility directly
+      // 1. Phonics vowel teams & sounds
       expect(normalizePhoneticsForSpeech("Catch words where 'ea' says /ē/ like beach!"))
-        .toBe("Catch words where 'ea' says long E like beach!");
+        .toBe("Catch words where E A says long E like beach!");
 
       expect(normalizePhoneticsForSpeech("'bread' is a trickster! 'ea' says short /ĕ/ like in bed!"))
-        .toBe("'bread' is a trickster! 'ea' says short E like in bed!");
+        .toBe("bread is a trickster! E A says short E like in bed!");
 
       expect(normalizePhoneticsForSpeech("Catch words with 'ai' and 'ay' that say /ā/!"))
-        .toBe("Catch words with 'ai' and 'ay' that say long A!");
+        .toBe("Catch words with A I and A Y that say long A!");
 
+      expect(normalizePhoneticsForSpeech("Catch words with long vowel teams ee, ie, oa, and ui!"))
+        .toBe("Catch words with long vowel teams E E, I E, O A, and U I!");
+
+      // 2. R-controlled vowels (spelled letter names vs spoken phoneme sounds)
       expect(normalizePhoneticsForSpeech("'star' has r-controlled vowel 'ar' saying /är/!"))
-        .toBe("'star' has r-controlled vowel 'ar' saying ar!");
+        .toBe("star has r-controlled vowel A R saying ar!");
 
       expect(normalizePhoneticsForSpeech("'water' ends with r-controlled 'er' saying /ẽr/!"))
-        .toBe("'water' ends with r-controlled 'er' saying er!");
+        .toBe("water ends with r-controlled E R saying er!");
 
       expect(normalizePhoneticsForSpeech("'storm' has r-controlled vowel 'or' saying /ôr/!"))
-        .toBe("'storm' has r-controlled vowel 'or' saying or!");
+        .toBe("storm has r-controlled vowel O R saying or!");
 
+      expect(normalizePhoneticsForSpeech("Catch words with bossy R-controlled vowels ar, er, ir, or, and ur!"))
+        .toBe("Catch words with bossy R-controlled vowels A R, E R, I R, O R, and U R!");
+
+      // 3. Morphology & affixes
       expect(normalizePhoneticsForSpeech("Action Suffixes (-s / -es, -ed, -ing)"))
-        .toBe("Action Suffixes (-s or -es, -ed, -ing)");
+        .toBe("Action Suffixes (-S or -E S, -E D, -I N G)");
+
+      expect(normalizePhoneticsForSpeech("Catch words with prefixes 're-' (again) and 'un-' (not)!"))
+        .toBe("Catch words with prefixes R E (again) and U N (not)!");
+
+      expect(normalizePhoneticsForSpeech("re + play → replay"))
+        .toBe("R E plus play makes replay");
+
+      // 4. Math equations converted to spoken questions
+      expect(normalizePhoneticsForSpeech("8 + 6 = ?"))
+        .toBe("What is 8 plus 6?");
+
+      expect(normalizePhoneticsForSpeech("15 - 7 = ?"))
+        .toBe("What is 15 minus 7?");
+
+      expect(normalizePhoneticsForSpeech("10, 20, 30, ?"))
+        .toBe("10, 20, 30, what comes next?");
+
+      expect(normalizePhoneticsForSpeech("Check the sign (+ or -) and catch the answer!"))
+        .toBe("Check the sign (plus or minus) and catch the answer!");
+
+      // 5. Vocabulary whole words preserved cleanly
+      expect(normalizePhoneticsForSpeech("'large' is a synonym for 'big'."))
+        .toBe("large is a synonym for big.");
 
       // Test integration with speakPrompt
       await audio.speakPrompt("Catch words where 'ea' says /ē/!");
@@ -362,6 +394,7 @@ describe('AudioService - Procedural Audio & Web Speech API (Milestone 3)', () =>
       expect(utterance.text).not.toContain('slash');
       expect(utterance.text).not.toContain('/');
       expect(utterance.text).toContain('long E');
+      expect(utterance.text).toContain('E A');
     });
 
     it('skips speech when ttsEnabled is false', async () => {
