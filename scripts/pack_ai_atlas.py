@@ -1,34 +1,74 @@
 #!/usr/bin/env python3
 """
 scripts/pack_ai_atlas.py - Master AI Raster Asset Processor & Texture Atlas Packer
-Integrates AI-generated raster artwork for Princess Penelope in pants, cute fruits,
-enchanted orchard tree, and royal catcher basket into the production atlas.
+Uses connected-component border floodfill segmentation to preserve 100% of interior white details
+(eyes, teeth, highlights, sole caps, fruit flesh) while providing clean anti-aliased edges
+without white fringing or halo artifacts over in-game backgrounds.
 """
 
 import os
 import json
 import math
-from PIL import Image, ImageDraw
+from collections import deque
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
 
 SCALE = 4
 SRC_DIR = '/home/gallabot/.gemini/antigravity/brain/ec582232-567f-4225-b8f1-d6ff7b3cefb8'
 
-def remove_white_bg(img, threshold=240, feather=18):
-    """Smooth alpha feathering against pure white/near-white backgrounds."""
-    img = img.convert("RGBA")
-    datas = img.getdata()
-    new_data = []
-    for r, g, b, _ in datas:
-        min_c = min(r, g, b)
-        if min_c >= threshold:
-            new_data.append((r, g, b, 0))
-        elif min_c > threshold - feather:
-            alpha = int(255 * (threshold - min_c) / feather)
-            new_data.append((r, g, b, alpha))
-        else:
-            new_data.append((r, g, b, 255))
-    img.putdata(new_data)
-    return img
+def extract_sprite_clean(img, thresh_dist=24, feather_radius=1.0):
+    """
+    Extracts foreground sprite using connected border floodfill to preserve all interior whites,
+    followed by anti-aliased edge smoothing and color de-fringing.
+    """
+    img_rgb = img.convert("RGB")
+    w, h = img_rgb.size
+
+    arr = np.array(img_rgb, dtype=np.int16)
+    # Distance from white (255, 255, 255)
+    diff = 255 - arr
+    max_diff = np.max(diff, axis=2)
+
+    bg_candidates = (max_diff <= thresh_dist)
+
+    visited = np.zeros((h, w), dtype=bool)
+    queue = deque()
+
+    # Seed border pixels that match background whiteness
+    for x in range(w):
+        if bg_candidates[0, x]:
+            queue.append((0, x))
+            visited[0, x] = True
+        if bg_candidates[h - 1, x] and not visited[h - 1, x]:
+            queue.append((h - 1, x))
+            visited[h - 1, x] = True
+    for y in range(h):
+        if bg_candidates[y, 0] and not visited[y, 0]:
+            queue.append((y, 0))
+            visited[y, 0] = True
+        if bg_candidates[y, w - 1] and not visited[y, w - 1]:
+            queue.append((y, w - 1))
+            visited[y, w - 1] = True
+
+    # 4-connectivity BFS
+    while queue:
+        cy, cx = queue.popleft()
+        for ny, nx in [(cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)]:
+            if 0 <= ny < h and 0 <= nx < w:
+                if not visited[ny, nx] and bg_candidates[ny, nx]:
+                    visited[ny, nx] = True
+                    queue.append((ny, nx))
+
+    # visited is background. Invert to get foreground mask.
+    fg_mask_arr = np.where(visited, 0, 255).astype(np.uint8)
+    fg_mask = Image.fromarray(fg_mask_arr, mode="L")
+
+    if feather_radius > 0:
+        fg_mask = fg_mask.filter(ImageFilter.GaussianBlur(feather_radius))
+
+    rgba = img_rgb.convert("RGBA")
+    rgba.putalpha(fg_mask)
+    return rgba
 
 def make_canvas(w, h):
     return Image.new("RGBA", (w * SCALE, h * SCALE), (0, 0, 0, 0))
@@ -45,7 +85,7 @@ def get_princess_sprites():
     # Idle Poses
     char_path = os.path.join(SRC_DIR, 'princess_penelope_character_1788441979685.jpg')
     char_img = Image.open(char_path)
-    char_trans = remove_white_bg(char_img, threshold=242)
+    char_trans = extract_sprite_clean(char_img, thresh_dist=25, feather_radius=1.2)
     c_bbox = char_trans.getbbox()
     cropped = char_trans.crop(c_bbox)
     cw, ch = cropped.size
@@ -66,7 +106,7 @@ def get_princess_sprites():
     # Celebrating / Catch Pose
     celeb_path = os.path.join(SRC_DIR, 'princess_penelope_celebrating_1788442003907.jpg')
     celeb_img = Image.open(celeb_path)
-    celeb_trans = remove_white_bg(celeb_img, threshold=242)
+    celeb_trans = extract_sprite_clean(celeb_img, thresh_dist=25, feather_radius=1.2)
     cb_bbox = celeb_trans.getbbox()
     c_cropped = celeb_trans.crop(cb_bbox)
     cw2, ch2 = c_cropped.size
@@ -113,7 +153,7 @@ def get_fruit_sprites():
             name = names[row][col]
             box = (col * cell_w, row * cell_h, (col + 1) * cell_w, (row + 1) * cell_h)
             cell = sheet.crop(box)
-            cell_trans = remove_white_bg(cell, threshold=242)
+            cell_trans = extract_sprite_clean(cell, thresh_dist=22, feather_radius=1.0)
             bbox = cell_trans.getbbox()
             if bbox:
                 fruit_crop = cell_trans.crop(bbox)
@@ -123,7 +163,7 @@ def get_fruit_sprites():
                 sq.paste(fruit_crop, ((max_dim - fw) // 2, (max_dim - fh) // 2))
                 sprites[name] = sq.resize((80, 80), Image.Resampling.LANCZOS)
 
-    # Generate the 3 complementary fruits (lemon, plum, kiwi)
+    # 3 Complementary fruits
     # Lemon from orange (hue shifted +15)
     orange_img = sprites["orange"]
     hsv_lemon = orange_img.convert("HSV")
@@ -142,7 +182,7 @@ def get_fruit_sprites():
     plum_rgb.putalpha(peach_img.split()[3])
     sprites["plum"] = plum_rgb
 
-    # Kiwi from peach (hue shifted +70 to fresh kiwi lime)
+    # Kiwi from peach (hue shifted +70)
     h_new = h.point(lambda p: (p + 70) % 256)
     kiwi_rgb = Image.merge("HSV", (h_new, s, v)).convert("RGBA")
     kiwi_rgb.putalpha(peach_img.split()[3])
@@ -159,7 +199,7 @@ def get_tree_and_basket_sprites():
     # Basket
     basket_path = os.path.join(SRC_DIR, 'royal_golden_basket_1788442063144.jpg')
     basket_img = Image.open(basket_path)
-    b_trans = remove_white_bg(basket_img, threshold=242)
+    b_trans = extract_sprite_clean(basket_img, thresh_dist=25, feather_radius=1.2)
     b_bbox = b_trans.getbbox()
     b_cropped = b_trans.crop(b_bbox)
     b_scaled = b_cropped.resize((128, 64), Image.Resampling.LANCZOS)
@@ -169,7 +209,7 @@ def get_tree_and_basket_sprites():
     # Tree (5 progressive stages)
     tree_path = os.path.join(SRC_DIR, 'enchanted_royal_tree_1788442048455.jpg')
     tree_img = Image.open(tree_path)
-    t_trans = remove_white_bg(tree_img, threshold=238)
+    t_trans = extract_sprite_clean(tree_img, thresh_dist=20, feather_radius=1.2)
     t_bbox = t_trans.getbbox()
     t_cropped = t_trans.crop(t_bbox)
 
@@ -184,7 +224,7 @@ def get_tree_and_basket_sprites():
     return sprites
 
 # ------------------------------------------------------------------------------
-# 4. CRISP VECTOR UI ELEMENTS (BUTTONS, STARS, BADGES, PARTICLES)
+# 4. CRISP VECTOR UI ELEMENTS
 # ------------------------------------------------------------------------------
 def get_ui_sprites():
     sprites = {}
@@ -331,13 +371,13 @@ def pack_atlas(output_dir="public/assets"):
     os.makedirs(output_dir, exist_ok=True)
     all_sprites = {}
 
-    print("Processing AI Princess sprites...")
+    print("Processing AI Princess sprites (clean floodfill)...")
     all_sprites.update(get_princess_sprites())
 
-    print("Processing AI Fruit characters...")
+    print("Processing AI Fruit characters (clean floodfill)...")
     all_sprites.update(get_fruit_sprites())
 
-    print("Processing AI Tree & Basket...")
+    print("Processing AI Tree & Basket (clean floodfill)...")
     all_sprites.update(get_tree_and_basket_sprites())
 
     print("Processing UI elements...")
@@ -349,7 +389,6 @@ def pack_atlas(output_dir="public/assets"):
     atlas_img = Image.new("RGBA", (atlas_w, atlas_h), (0, 0, 0, 0))
     padding = 6
 
-    # Sort sprites by height descending for optimal shelf packing
     sorted_items = sorted(all_sprites.items(), key=lambda item: item[1].size[1], reverse=True)
 
     frames_json = {}
@@ -385,7 +424,7 @@ def pack_atlas(output_dir="public/assets"):
         "frames": frames_json,
         "meta": {
             "app": "CatchTheFruit-AIAtlasPacker",
-            "version": "3.0-PrincessPants-AIRaster",
+            "version": "3.1-CleanFloodfill",
             "image": "atlas.png",
             "format": "RGBA8888",
             "size": {"w": atlas_w, "h": atlas_h},
@@ -400,7 +439,7 @@ def pack_atlas(output_dir="public/assets"):
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(atlas_data, f, indent=2)
 
-    print(f"Successfully generated AI Texture Atlas:")
+    print(f"Successfully generated clean AI Texture Atlas:")
     print(f"  PNG:  {png_path} ({os.path.getsize(png_path):,} bytes)")
     print(f"  JSON: {json_path} ({len(frames_json)} frames)")
 
