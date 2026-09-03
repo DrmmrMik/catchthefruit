@@ -39,7 +39,7 @@ export class GameScene extends Phaser.Scene {
   private correctAttempts: number = 0;
   private isPaused: boolean = false;
   private isRemediating: boolean = false;
-  private fallDurationMs: number = 2600;
+  private fallDurationMs: number = 5200;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -85,7 +85,8 @@ export class GameScene extends Phaser.Scene {
     // Load curriculum question set for this level (12 items)
     this.questions = curriculumService.generateQuestionSet(this.topic, this.levelNumber, 12);
     const levelConfig = curriculumService.getLevel(this.topic, this.levelNumber);
-    this.fallDurationMs = levelConfig?.fallSpeedDurationMs ?? 2600;
+    // Half-speed drop: double the duration for gentle, accessible 2nd grade gameplay
+    this.fallDurationMs = (levelConfig?.fallSpeedDurationMs ?? 2600) * 2;
 
     const initialQuestion = this.questions[0];
 
@@ -457,7 +458,7 @@ export class GameScene extends Phaser.Scene {
     this.isRemediating = true;
 
     // Dampen fall speed for next items
-    this.fallDurationMs = Math.min(3600, this.fallDurationMs + 400);
+    this.fallDurationMs = Math.min(8000, this.fallDurationMs + 800);
 
     // Display TeachingCard remediation modal
     new TeachingCard(this, {

@@ -44,6 +44,68 @@ const COMBO_PENTATONIC = [
   1318.51  // E6
 ];
 
+/**
+ * Normalizes phonetic symbols, slashes, and affix notations for natural TTS pronunciation.
+ * Replaces dictionary notation (e.g. /ē/, /ĕ/, /ā/, /är/) with their natural phoneme words,
+ * so browser speech engines do not utter the word "slash".
+ */
+export function normalizePhoneticsForSpeech(text: string): string {
+  if (!text) return '';
+
+  let speech = text;
+
+  // 1. Long vowels preceded by 'long' or standalone
+  // e.g. "long /ē/" -> "long E", "/ē/" -> "long E"
+  speech = speech.replace(/\blong\s+\/([āaA])\//gi, 'long A');
+  speech = speech.replace(/\blong\s+\/([ēeE])\//gi, 'long E');
+  speech = speech.replace(/\blong\s+\/([īiI])\//gi, 'long I');
+  speech = speech.replace(/\blong\s+\/([ōoO])\//gi, 'long O');
+  speech = speech.replace(/\blong\s+\/([ūuU])\//gi, 'long U');
+
+  // 2. Short vowels preceded by 'short' or standalone
+  // e.g. "short /ĕ/" -> "short E", "/ĕ/" -> "short E"
+  speech = speech.replace(/\bshort\s+\/([ăaA])\//gi, 'short A');
+  speech = speech.replace(/\bshort\s+\/([ĕeE])\//gi, 'short E');
+  speech = speech.replace(/\bshort\s+\/([ĭiI])\//gi, 'short I');
+  speech = speech.replace(/\bshort\s+\/([ŏoO])\//gi, 'short O');
+  speech = speech.replace(/\bshort\s+\/([ŭuU])\//gi, 'short U');
+
+  // 3. Standalone phonetic vowel symbols with macrons (ā, ē, ī, ō, ū)
+  speech = speech.replace(/\/([āA])\//g, 'long A');
+  speech = speech.replace(/\/([ēE])\//g, 'long E');
+  speech = speech.replace(/\/([īI])\//g, 'long I');
+  speech = speech.replace(/\/([ōO])\//g, 'long O');
+  speech = speech.replace(/\/([ūU])\//g, 'long U');
+
+  // 4. Standalone phonetic vowel symbols with breves (ă, ĕ, ĭ, ŏ, ŭ)
+  speech = speech.replace(/\/([ă])\//g, 'short A');
+  speech = speech.replace(/\/([ĕ])\//g, 'short E');
+  speech = speech.replace(/\/([ĭ])\//g, 'short I');
+  speech = speech.replace(/\/([ŏ])\//g, 'short O');
+  speech = speech.replace(/\/([ŭ])\//g, 'short U');
+
+  // 5. R-controlled vowels
+  speech = speech.replace(/\/är\/|\/ar\//gi, 'ar');
+  speech = speech.replace(/\/ôr\/|\/or\//gi, 'or');
+  speech = speech.replace(/\/ẽr\/|\/er\/|\/ir\/|\/ur\//gi, 'er');
+
+  // 6. Double-o sounds (/oo/, /ōō/, /o͝o/)
+  speech = speech.replace(/\/(oo|ōō|o͝o)\//gi, 'oo');
+
+  // 7. Affix slashes (e.g. -s / -es, -s/-es)
+  speech = speech.replace(/-\s*s\s*\/\s*-\s*es/gi, '-s or -es');
+  speech = speech.replace(/(\w+)\s*\/\s*(\w+)/g, '$1 or $2');
+
+  // 8. Any other enclosed phoneme pattern like /ch/, /sh/, /th/ -> ch, sh, th
+  speech = speech.replace(/\/([^\/\s]+)\//g, '$1');
+
+  // 9. Any stray standalone forward slash
+  speech = speech.replace(/\s*\/\s*/g, ' or ');
+  speech = speech.replace(/\//g, ' ');
+
+  return speech.trim();
+}
+
 export class AudioService implements IAudioSynthesizer {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -366,22 +428,25 @@ export class AudioService implements IAudioSynthesizer {
   }
 
   // ==========================================================================
-  // Web Speech API TTS Integration
+  // WEB SPEECH API (TTS) ENGINE
   // ==========================================================================
 
   /**
    * Speaks prompt text via Web Speech API
+   * - Normalizes phonetic dictionary symbols (e.g. /ē/, /ĕ/, /ā/) to natural phoneme sounds
    * - Rate: 0.9x for Grade 2 comprehension
    * - Pitch: 1.0 (friendly tone)
    * - Announces to WCAG AAA #sr-announcements live-region
    * - Graceful offline / headless fallback with timeout guard
    */
   public speakPrompt(text: string): Promise<void> {
+    const spokenText = normalizePhoneticsForSpeech(text);
+
     // Accessibility announcement for screen readers
     if (typeof document !== 'undefined') {
       const srElement = document.getElementById('sr-announcements');
       if (srElement) {
-        srElement.textContent = text;
+        srElement.textContent = spokenText;
       }
     }
 
@@ -397,7 +462,7 @@ export class AudioService implements IAudioSynthesizer {
       try {
         window.speechSynthesis.cancel();
 
-        const utterance = new SpeechSynthesisUtterance(text);
+        const utterance = new SpeechSynthesisUtterance(spokenText);
         utterance.rate = 0.9;
         utterance.pitch = 1.0;
 

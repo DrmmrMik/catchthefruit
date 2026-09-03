@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { AudioService } from '../src/services/audio.service';
+import { AudioService, normalizePhoneticsForSpeech } from '../src/services/audio.service';
 import { StorageService } from '../src/services/storage.service';
 
 // Mock Web Audio API classes for headless testing
@@ -314,7 +314,7 @@ describe('AudioService - Procedural Audio & Web Speech API (Milestone 3)', () =>
       const callArgs = speakMock.mock.calls[0];
       expect(callArgs).toBeDefined();
       const utterance = callArgs![0] as SpeechSynthesisUtterance;
-      expect(utterance.text).toBe(prompt);
+      expect(utterance.text).toBe("Catch words with 'ea' that say long E!");
       expect(utterance.rate).toBe(0.9);
       expect(utterance.pitch).toBe(1.0);
       expect(utterance.voice?.lang).toBe('en-US');
@@ -330,6 +330,38 @@ describe('AudioService - Procedural Audio & Web Speech API (Milestone 3)', () =>
 
       await audio.speakPrompt('Target: beach');
       expect(srEl.textContent).toBe('Target: beach');
+    });
+
+    it('normalizes phonetic symbols so TTS speaks phonemes without saying "slash"', async () => {
+      // Test the normalization utility directly
+      expect(normalizePhoneticsForSpeech("Catch words where 'ea' says /ē/ like beach!"))
+        .toBe("Catch words where 'ea' says long E like beach!");
+
+      expect(normalizePhoneticsForSpeech("'bread' is a trickster! 'ea' says short /ĕ/ like in bed!"))
+        .toBe("'bread' is a trickster! 'ea' says short E like in bed!");
+
+      expect(normalizePhoneticsForSpeech("Catch words with 'ai' and 'ay' that say /ā/!"))
+        .toBe("Catch words with 'ai' and 'ay' that say long A!");
+
+      expect(normalizePhoneticsForSpeech("'star' has r-controlled vowel 'ar' saying /är/!"))
+        .toBe("'star' has r-controlled vowel 'ar' saying ar!");
+
+      expect(normalizePhoneticsForSpeech("'water' ends with r-controlled 'er' saying /ẽr/!"))
+        .toBe("'water' ends with r-controlled 'er' saying er!");
+
+      expect(normalizePhoneticsForSpeech("'storm' has r-controlled vowel 'or' saying /ôr/!"))
+        .toBe("'storm' has r-controlled vowel 'or' saying or!");
+
+      expect(normalizePhoneticsForSpeech("Action Suffixes (-s / -es, -ed, -ing)"))
+        .toBe("Action Suffixes (-s or -es, -ed, -ing)");
+
+      // Test integration with speakPrompt
+      await audio.speakPrompt("Catch words where 'ea' says /ē/!");
+      const lastCall = speakMock.mock.calls[speakMock.mock.calls.length - 1];
+      const utterance = lastCall![0] as SpeechSynthesisUtterance;
+      expect(utterance.text).not.toContain('slash');
+      expect(utterance.text).not.toContain('/');
+      expect(utterance.text).toContain('long E');
     });
 
     it('skips speech when ttsEnabled is false', async () => {
