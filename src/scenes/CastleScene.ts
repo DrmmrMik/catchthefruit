@@ -29,19 +29,19 @@ export class CastleScene extends Phaser.Scene {
   private modalContainer?: Phaser.GameObjects.Container;
 
   private outsideSlots: SlotDefinition[] = [
-    { id: 'centerpiece', name: 'Courtyard Center', category: 'outside', slotType: 'centerpiece', x: 270, y: 530 },
-    { id: 'garden_left', name: 'Rose Garden Left', category: 'outside', slotType: 'garden', x: 95, y: 640 },
-    { id: 'garden_right', name: 'Rose Garden Right', category: 'outside', slotType: 'garden', x: 445, y: 640 },
-    { id: 'gate', name: 'Path Lamppost', category: 'outside', slotType: 'gate', x: 460, y: 440 },
-    { id: 'banners', name: 'Tower Banners', category: 'outside', slotType: 'banners', x: 270, y: 220 }
+    { id: 'banners', name: 'Tower Banners', category: 'outside', slotType: 'banners', x: 270, y: 190 },
+    { id: 'gate', name: 'Path Lamppost', category: 'outside', slotType: 'gate', x: 440, y: 550 },
+    { id: 'centerpiece', name: 'Courtyard Patio', category: 'outside', slotType: 'centerpiece', x: 270, y: 640 },
+    { id: 'garden_left', name: 'Rose Garden Left', category: 'outside', slotType: 'garden', x: 95, y: 680 },
+    { id: 'garden_right', name: 'Rose Garden Right', category: 'outside', slotType: 'garden', x: 445, y: 680 }
   ];
 
   private insideSlots: SlotDefinition[] = [
-    { id: 'throne', name: 'Royal Throne', category: 'inside', slotType: 'throne', x: 270, y: 520 },
-    { id: 'seating', name: 'Fireside Seating', category: 'inside', slotType: 'seating', x: 440, y: 630 },
-    { id: 'table', name: 'Tea & Books Table', category: 'inside', slotType: 'table', x: 100, y: 640 },
-    { id: 'wall', name: 'Gallery Mirror', category: 'inside', slotType: 'wall', x: 95, y: 360 },
-    { id: 'chandelier', name: 'Crystal Chandelier', category: 'inside', slotType: 'wall', x: 270, y: 160 }
+    { id: 'chandelier', name: 'Crystal Chandelier', category: 'inside', slotType: 'wall', x: 270, y: 135 },
+    { id: 'wall', name: 'Gallery Mirror', category: 'inside', slotType: 'wall', x: 80, y: 310 },
+    { id: 'throne', name: 'Royal Throne', category: 'inside', slotType: 'throne', x: 270, y: 570 },
+    { id: 'table', name: 'Tea & Books Table', category: 'inside', slotType: 'table', x: 100, y: 660 },
+    { id: 'seating', name: 'Cozy Parlor Seating', category: 'inside', slotType: 'seating', x: 435, y: 660 }
   ];
 
   constructor() {
@@ -202,6 +202,12 @@ export class CastleScene extends Phaser.Scene {
       const placedItem = placedItemId ? decorationService.getItemById(placedItemId) : undefined;
 
       if (placedItem) {
+        // Grounding drop shadow for 2D floor/patio items
+        if (slot.slotType !== 'banners' && slot.slotType !== 'wall') {
+          const shadow = this.add.ellipse(0, (slot.slotType === 'centerpiece' || slot.slotType === 'throne' ? 52 : 44) - 4, 76, 14, 0x000000, 0.26);
+          container.add(shadow);
+        }
+
         // Render placed decoration sprite
         const sprite = this.add.image(0, 0, 'atlas', placedItem.icon);
         const targetSize = slot.slotType === 'centerpiece' || slot.slotType === 'throne' ? 104 : 88;
@@ -237,21 +243,28 @@ export class CastleScene extends Phaser.Scene {
           this.openSlotActions(slot, placedItem);
         });
       } else {
-        // Render empty slot pedestal
+        // Render 2D flat placement mat / bracket
+        const isWallSlot = slot.slotType === 'banners' || slot.slotType === 'wall';
         const bg = this.add.graphics();
-        bg.fillStyle(0xffffff, 0.45);
-        bg.lineStyle(2, 0x38bdf8, 0.85);
-        bg.fillCircle(0, 0, 36);
-        bg.strokeCircle(0, 0, 36);
+        bg.fillStyle(0xffffff, 0.55);
+        bg.lineStyle(2, 0x38bdf8, 0.9);
 
-        const plusText = this.add.text(0, -6, '+', {
+        if (isWallSlot) {
+          bg.fillRoundedRect(-36, -20, 72, 40, 10);
+          bg.strokeRoundedRect(-36, -20, 72, 40, 10);
+        } else {
+          bg.fillEllipse(0, 4, 80, 38);
+          bg.strokeEllipse(0, 4, 80, 38);
+        }
+
+        const plusText = this.add.text(0, -4, '+', {
           fontFamily: 'Lexend, sans-serif',
-          fontSize: '24px',
+          fontSize: '22px',
           color: '#0284c7',
           fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        const slotLabel = this.add.text(0, 16, 'Place', {
+        const slotLabel = this.add.text(0, 14, 'Place', {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '11px',
           color: '#0369a1',
@@ -259,7 +272,7 @@ export class CastleScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         container.add([bg, plusText, slotLabel]);
-        container.setSize(72, 72);
+        container.setSize(80, 50);
 
         // Pulsing glow tween on empty slot
         this.tweens.add({
@@ -285,6 +298,9 @@ export class CastleScene extends Phaser.Scene {
   private createPrincess(width: number, height: number): void {
     const x = width / 2;
     const y = height - 105;
+
+    // Grounding shadow under Penelope's sneakers
+    this.add.ellipse(x, y + 44, 52, 14, 0x000000, 0.25).setDepth(5);
 
     this.princess = this.add.sprite(x, y, 'atlas', 'princess-idle-1')
       .setDepth(6)

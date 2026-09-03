@@ -62,13 +62,13 @@ Checking for forbidden cache.addAll( calls in sw.js...
   [PASS] No 'cache.addAll(' found in sw.js.
 Verifying precached assets exist in dist/ directory...
 Found 7 asset references in sw.js: ['./icons/icon-192x192.png', './icons/icon-512x512.png', './icons/maskable-192x192.png', './icons/maskable-512x512.png', './index.html', './manifest.json', './screenshots/mobile-1.png']
-  Asset './manifest.json' verified in dist/ (1343 bytes)
-  Asset './icons/icon-512x512.png' verified in dist/ (63596 bytes)
-  Asset './index.html' verified in dist/ (3800 bytes)
-  Asset './icons/icon-192x192.png' verified in dist/ (28435 bytes)
-  Asset './icons/maskable-512x512.png' verified in dist/ (64072 bytes)
   Asset './screenshots/mobile-1.png' verified in dist/ (19308 bytes)
+  Asset './manifest.json' verified in dist/ (1343 bytes)
+  Asset './icons/maskable-512x512.png' verified in dist/ (64072 bytes)
   Asset './icons/maskable-192x192.png' verified in dist/ (28473 bytes)
+  Asset './index.html' verified in dist/ (3800 bytes)
+  Asset './icons/icon-512x512.png' verified in dist/ (63596 bytes)
+  Asset './icons/icon-192x192.png' verified in dist/ (28435 bytes)
   [PASS] All 7 precache asset paths physically exist in dist/!
 
 --- TEST 4: MANIFEST & DIST ARTIFACT INTEGRITY ---
