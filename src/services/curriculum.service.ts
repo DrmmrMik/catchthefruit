@@ -181,10 +181,20 @@ export class CurriculumService {
       // PhonicsItem
       subTopic = item.ruleName;
       targetAnswer = item.word;
-      if (!prompt) {
-        prompt = `Catch the '${item.ruleName}' sound: ${item.sound}!`;
+
+      // In sound-discrimination levels (e.g. ea_long_e vs ea_short_e), the prompt must explicitly
+      // state which sound is being tested so the prompt matches the target answer!
+      if (item.ruleName === 'ea_long_e') {
+        prompt = "Catch words where 'ea' says /ē/ like beach!";
+        spokenPrompt = "Catch words where E A says long E like beach!";
+      } else if (item.ruleName === 'ea_short_e') {
+        prompt = "Catch the trickster word where 'ea' says /ĕ/ like bread!";
+        spokenPrompt = "Catch the trickster word where E A says short E like bread!";
+      } else if (!prompt) {
+        prompt = `Catch words with '${item.ruleName}' that say ${item.sound}!`;
         spokenPrompt = `Catch words with ${item.ruleName} that say ${item.sound}!`;
       }
+
       options.push({
         text: item.word,
         fruitType: item.fruitType,
@@ -195,11 +205,15 @@ export class CurriculumService {
       const distractorFruits = this.getDistractorFruitTypes(item.fruitType, item.distractorWords.length);
       item.distractorWords.forEach((dw, idx) => {
         const fruit = distractorFruits[idx] ?? 'lemon';
+        const distractorItem = this.getItemsForTopic('phonics').find(
+          (pi) => 'word' in pi && pi.word.toLowerCase() === dw.toLowerCase()
+        );
+        const distractorExplanation = distractorItem?.explanation || item.explanation;
         options.push({
           text: dw,
           fruitType: fruit,
           isCorrect: false,
-          explanation: item.explanation
+          explanation: distractorExplanation
         });
       });
 
@@ -218,10 +232,9 @@ export class CurriculumService {
       // MorphologyItem
       subTopic = item.affix;
       targetAnswer = item.combinedWord;
-      if (!prompt) {
-        prompt = `Catch: ${item.visualSegmentation}`;
-        spokenPrompt = `Catch ${item.combinedWord}!`;
-      }
+      prompt = `Catch: ${item.visualSegmentation}`;
+      spokenPrompt = `Catch ${item.combinedWord}!`;
+
       options.push({
         text: item.combinedWord,
         fruitType: item.fruitType,
@@ -256,10 +269,9 @@ export class CurriculumService {
       subTopic = item.relationship;
       targetAnswer = item.matchWord;
       const relLabel = item.relationship === 'synonym' ? 'SAME as' : 'OPPOSITE of';
-      if (!prompt) {
-        prompt = `Catch the word that means the ${relLabel} "${item.targetWord}"!`;
-        spokenPrompt = `Catch the word that means the ${relLabel} ${item.targetWord}! ${item.sentenceContext}`;
-      }
+      prompt = `Catch the word that means the ${relLabel} "${item.targetWord}"!`;
+      spokenPrompt = `Catch the word that means the ${relLabel} ${item.targetWord}! ${item.sentenceContext}`;
+
       options.push({
         text: item.matchWord,
         fruitType: item.fruitType,
@@ -293,10 +305,9 @@ export class CurriculumService {
       // MathItem
       subTopic = item.operation;
       targetAnswer = String(item.result);
-      if (!prompt) {
-        prompt = item.prompt;
-        spokenPrompt = item.prompt.replace('?', 'what number?');
-      }
+      prompt = item.prompt;
+      spokenPrompt = item.prompt.replace('?', 'what number?');
+
       options.push({
         text: String(item.result),
         fruitType: item.fruitType,

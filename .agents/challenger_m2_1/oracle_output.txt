@@ -3,7 +3,7 @@
 ================================================================
 
 --- TEST 1: REPOSITORY DATA SYNCHRONIZATION (data/ vs public/data/) ---
-  [PASS] phonics.json: data/ and public/data/ are byte-identical (26188 bytes).
+  [PASS] phonics.json: data/ and public/data/ are byte-identical (26243 bytes).
   [PASS] morphology.json: data/ and public/data/ are byte-identical (21129 bytes).
   [PASS] vocabulary.json: data/ and public/data/ are byte-identical (18109 bytes).
   [PASS] math.json: data/ and public/data/ are byte-identical (13825 bytes).

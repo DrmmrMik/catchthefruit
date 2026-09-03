@@ -323,6 +323,58 @@ describe('Milestone 2 Curriculum & Zod Schema Validation', () => {
       }
     });
 
+    it('generates sound-discriminated questions in Phonics Level 2 (/ē/ vs /ĕ/) matching educator requirements', () => {
+      const questions = service.generateQuestionSet('phonics', 2, 12);
+      expect(questions.length).toBe(12);
+
+      for (const q of questions) {
+        expect(CurriculumItemSchema.safeParse(q).success).toBe(true);
+        const correctOpt = q.options.find((o) => o.isCorrect);
+        expect(correctOpt).toBeDefined();
+
+        if (q.subTopic === 'ea_long_e') {
+          // Long E question
+          expect(q.prompt).toContain('/ē/');
+          expect(q.prompt).toContain('beach');
+          expect(['beach', 'teach', 'leaf', 'dream', 'clean', 'peach']).toContain(correctOpt!.text);
+
+          // Distractor fruits must share the 'ea' pattern (trickster short E words), requiring sound discrimination
+          const wrongOpts = q.options.filter((o) => !o.isCorrect);
+          for (const wrong of wrongOpts) {
+            expect(wrong.text.includes('ea'), `Distractor ${wrong.text} should have 'ea' for sound discrimination`).toBe(true);
+            expect(['bread', 'head', 'thread', 'sweat', 'spread', 'heavy']).toContain(wrong.text);
+          }
+        } else if (q.subTopic === 'ea_short_e') {
+          // Trickster short E question
+          expect(q.prompt).toContain('/ĕ/');
+          expect(q.prompt).toContain('trickster');
+          expect(q.prompt).toContain('bread');
+          expect(['bread', 'head', 'thread', 'sweat', 'spread', 'heavy']).toContain(correctOpt!.text);
+
+          // Distractor fruits must share the 'ea' pattern (long E words)
+          const wrongOpts = q.options.filter((o) => !o.isCorrect);
+          for (const wrong of wrongOpts) {
+            expect(wrong.text.includes('ea'), `Distractor ${wrong.text} should have 'ea' for sound discrimination`).toBe(true);
+            expect(['beach', 'teach', 'leaf', 'dream', 'clean', 'peach']).toContain(wrong.text);
+          }
+        }
+      }
+    });
+
+    it('generates item-specific prompts in Vocabulary Level 3 rather than blanket text', () => {
+      const questions = service.generateQuestionSet('vocabulary', 3, 6);
+      for (const q of questions) {
+        expect(q.prompt).toMatch(/Catch the word that means the (SAME as|OPPOSITE of) ".*"!/);
+      }
+    });
+
+    it('preserves exact arithmetic equation prompts in Math', () => {
+      const questions = service.generateQuestionSet('math', 1, 6);
+      for (const q of questions) {
+        expect(q.prompt).toMatch(/\d+\s*\+\s*\d+\s*=\s*\?/);
+      }
+    });
+
     it('provides an initialized default singleton instance', () => {
       expect(curriculumService).toBeDefined();
       expect(curriculumService.getMasterCurriculum().version).toBe('1.0.0');
