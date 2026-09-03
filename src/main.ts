@@ -69,6 +69,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 export class CatchTheFruitGame extends Phaser.Game {
   constructor(config: Phaser.Types.Core.GameConfig = gameConfig) {
     super(config);
+    if (typeof window !== 'undefined') {
+      (window as unknown as { __GAME__: Phaser.Game }).__GAME__ = this;
+    }
   }
 }
 

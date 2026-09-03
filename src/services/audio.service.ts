@@ -138,7 +138,10 @@ export class AudioService implements IAudioSynthesizer {
 
     if (this.ctx.state === 'suspended') {
       try {
-        await this.ctx.resume();
+        await Promise.race([
+          this.ctx.resume(),
+          new Promise((resolve) => setTimeout(resolve, 150))
+        ]);
       } catch {
         // Handle environments where resume is rejected
       }
