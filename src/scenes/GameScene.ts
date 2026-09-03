@@ -212,11 +212,6 @@ export class GameScene extends Phaser.Scene {
     const question = this.questions[this.currentQuestionIndex]!;
     this.hud.updatePrompt(question.prompt, `Item ${this.currentQuestionIndex + 1} of ${this.questions.length}`);
 
-    // Re-speak prompt if question has changed
-    if (question.spokenPrompt) {
-      audioService.speakPrompt(question.spokenPrompt);
-    }
-
     // Determine options to spawn (Target + 1 or 2 Distractors)
     const optionsToSpawn = [...question.options].sort(() => 0.5 - Math.random());
     const width = this.cameras.main.width;
@@ -329,6 +324,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private catchFruit(fruit: ActiveFruit): void {
+    if (fruit.isCaught) return;
     fruit.isCaught = true;
     this.totalAttempts++;
 
@@ -336,6 +332,22 @@ export class GameScene extends Phaser.Scene {
       this.handleCorrectCatch(fruit);
     } else {
       this.handleIncorrectCatch(fruit);
+    }
+
+    // Lock out all other fruits in this wave immediately so sliding character does not bump wrong fruit
+    const otherFruits = this.activeFruits.filter(f => f !== fruit && !f.isCaught);
+    for (const other of otherFruits) {
+      other.isCaught = true;
+      other.container.disableInteractive();
+      this.tweens.add({
+        targets: other.container,
+        alpha: 0,
+        scale: 0.7,
+        duration: 300,
+        onComplete: () => {
+          other.container.destroy();
+        }
+      });
     }
 
     // Animate caught fruit disappearance
@@ -346,13 +358,10 @@ export class GameScene extends Phaser.Scene {
       duration: 250,
       onComplete: () => {
         fruit.container.destroy();
-        const idx = this.activeFruits.indexOf(fruit);
-        if (idx !== -1) {
-          this.activeFruits.splice(idx, 1);
-        }
+        this.activeFruits = [];
 
-        // If no more fruits on screen, spawn next wave
-        if (this.activeFruits.length === 0) {
+        // If no remediation is active, spawn next wave
+        if (!this.isRemediating && !this.isPaused) {
           this.time.delayedCall(500, () => {
             this.spawnNextQuestionWave();
           });
@@ -438,6 +447,15 @@ export class GameScene extends Phaser.Scene {
     const whyWrong = `"${fruit.option.text}" is not the target pattern!`;
     this.showFeedbackToast(whyWrong, '#ef4444');
 
+    // Re-speak target question prompt after an incorrect catch to reinforce objective
+    if (fruit.question.spokenPrompt && !mistakeResult.shouldTriggerRemediation) {
+      this.time.delayedCall(600, () => {
+        if (!this.isPaused && !this.isRemediating) {
+          audioService.speakPrompt(fruit.question.spokenPrompt!);
+        }
+      });
+    }
+
     // Check for 3 consecutive mistakes -> Trigger Teaching Card Remediation
     if (mistakeResult.shouldTriggerRemediation) {
       this.triggerRemediation(fruit);
@@ -470,6 +488,9 @@ export class GameScene extends Phaser.Scene {
       autoSpeak: true,
       onResume: () => {
         this.isRemediating = false;
+        this.time.delayedCall(400, () => {
+          this.spawnNextQuestionWave();
+        });
       }
     });
   }
