@@ -55,8 +55,8 @@ export class TeachingCard extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.setDepth(1000);
 
-    // Auto-speak rule explanation via TTS
-    if (config.autoSpeak !== false) {
+    // Auto-speak rule explanation via TTS (disabled by default)
+    if (config.autoSpeak === true) {
       this.speakExplanation();
     }
   }
@@ -187,7 +187,7 @@ export class TeachingCard extends Phaser.GameObjects.Container {
     this.add(this.explanationText);
 
     // 7. Interactive Controls:
-    // A. "Listen Again" audio button (>= 48px touch target: 120 x 48 px)
+    // A. "Hear Rule" audio button (>= 48px touch target: 150 x 48 px)
     const listenBtnY = cardY + cardH - 105;
     this.listenButtonContainer = scene.add.container(centerX, listenBtnY);
 

@@ -163,11 +163,19 @@ export class HUD extends Phaser.GameObjects.Container {
     this.subtextText.setVisible(Boolean(this.currentSubtext));
     this.bannerContainer.add(this.subtextText);
 
-    // Make banner interactive: tapping banner re-speaks the prompt!
+    // Make banner interactive: tapping banner gives tactile click and visual pulse
     this.bannerContainer.setSize(bannerW, bannerH);
     this.bannerContainer.setInteractive({ useHandCursor: true });
     this.bannerContainer.on('pointerdown', () => {
-      this.speakPrompt();
+      this.audio.playClick();
+      scene.tweens.add({
+        targets: this.bannerContainer,
+        scaleX: 1.02,
+        scaleY: 1.02,
+        duration: 80,
+        yoyo: true,
+        ease: 'Quad.easeInOut'
+      });
     });
 
     this.add(this.bannerContainer);
@@ -194,7 +202,7 @@ export class HUD extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Speaks the current prompt text via TTS
+   * Speaks the current prompt text via AudioService
    */
   public speakPrompt(): void {
     this.audio.playClick();

@@ -142,16 +142,9 @@ export class CastleScene extends Phaser.Scene {
   private createTabButton(x: number, y: number, text: string, isActive: boolean, onClick: () => void): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
 
-    const bg = this.add.graphics();
-    if (isActive) {
-      bg.fillStyle(0x0284c7, 0.95);
-      bg.lineStyle(2, 0x38bdf8, 1);
-    } else {
-      bg.fillStyle(0x0f172a, 0.65);
-      bg.lineStyle(1, 0x94a3b8, 0.5);
-    }
-    bg.fillRoundedRect(-95, -18, 190, 36, 18);
-    bg.strokeRoundedRect(-95, -18, 190, 36, 18);
+    const bg = this.add.rectangle(0, 0, 190, 36, isActive ? 0x0284c7 : 0x0f172a, isActive ? 0.95 : 0.65)
+      .setStrokeStyle(isActive ? 2 : 1, isActive ? 0x38bdf8 : 0x94a3b8)
+      .setInteractive({ useHandCursor: true });
 
     const label = this.add.text(0, 0, text, {
       fontFamily: 'Lexend, sans-serif',
@@ -160,14 +153,12 @@ export class CastleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    container.add([bg, label]);
-    container.setSize(190, 36);
-    container.setInteractive({ useHandCursor: true });
-    container.on('pointerdown', () => {
+    bg.on('pointerdown', () => {
       audioService.playClick();
       onClick();
     });
 
+    container.add([bg, label]);
     return container;
   }
 
@@ -234,10 +225,13 @@ export class CastleScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         container.add([sprite, nameBadge]);
-        container.setSize(targetSize, targetSize + 24);
 
         // Clicking occupied slot gives option to swap or remove
-        container.setInteractive({ useHandCursor: true });
+        container.setInteractive(
+          new Phaser.Geom.Rectangle(-targetSize / 2, -targetSize / 2, targetSize, targetSize + 24),
+          Phaser.Geom.Rectangle.Contains
+        );
+        container.input!.cursor = 'pointer';
         container.on('pointerdown', () => {
           audioService.playClick();
           this.openSlotActions(slot, placedItem);
@@ -272,7 +266,6 @@ export class CastleScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         container.add([bg, plusText, slotLabel]);
-        container.setSize(80, 50);
 
         // Pulsing glow tween on empty slot
         this.tweens.add({
@@ -284,7 +277,11 @@ export class CastleScene extends Phaser.Scene {
           ease: 'Sine.easeInOut'
         });
 
-        container.setInteractive({ useHandCursor: true });
+        container.setInteractive(
+          new Phaser.Geom.Rectangle(-45, -25, 90, 50),
+          Phaser.Geom.Rectangle.Contains
+        );
+        container.input!.cursor = 'pointer';
         container.on('pointerdown', () => {
           audioService.playClick();
           this.openInventoryPicker(slot);
@@ -361,7 +358,35 @@ export class CastleScene extends Phaser.Scene {
       "Princesses get things done!"
     ];
     const speech = remarks[Math.floor(Math.random() * remarks.length)]!;
-    audioService.speakPrompt(speech);
+    audioService.playClick();
+    this.showSpeechBubble(this.princess.x, this.princess.y - 70, speech);
+  }
+
+  private showSpeechBubble(x: number, y: number, text: string): void {
+    const bubble = this.add.container(x, y).setDepth(30);
+    const bubbleBg = this.add.graphics();
+    bubbleBg.fillStyle(0xffffff, 0.95);
+    bubbleBg.lineStyle(2, 0xd946ef, 1.0);
+    bubbleBg.fillRoundedRect(-120, -22, 240, 44, 16);
+    bubbleBg.strokeRoundedRect(-120, -22, 240, 44, 16);
+    bubble.add(bubbleBg);
+
+    const bubbleText = this.add.text(0, 0, text, {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '13px',
+      color: '#4a044e',
+      align: 'center'
+    }).setOrigin(0.5);
+    bubble.add(bubbleText);
+
+    this.tweens.add({
+      targets: bubble,
+      y: y - 20,
+      alpha: { from: 1, to: 0 },
+      delay: 2000,
+      duration: 500,
+      onComplete: () => bubble.destroy()
+    });
   }
 
   private createBottomBar(width: number, height: number): void {

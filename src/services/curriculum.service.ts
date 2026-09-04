@@ -186,13 +186,13 @@ export class CurriculumService {
       // state which sound is being tested so the prompt matches the target answer!
       if (item.ruleName === 'ea_long_e') {
         prompt = "Catch words where 'ea' says /ē/ like beach!";
-        spokenPrompt = "Catch words where E A says long E like beach!";
+        spokenPrompt = prompt;
       } else if (item.ruleName === 'ea_short_e') {
         prompt = "Catch the trickster word where 'ea' says /ĕ/ like bread!";
-        spokenPrompt = "Catch the trickster word where E A says short E like bread!";
+        spokenPrompt = prompt;
       } else if (!prompt) {
-        prompt = `Catch words with '${item.ruleName}' that say ${item.sound}!`;
-        spokenPrompt = `Catch words with ${item.ruleName} that say ${item.sound}!`;
+        prompt = `Catch words with '${item.ruleName}' that say ${item.sound} (like ${item.word})!`;
+        spokenPrompt = prompt;
       }
 
       options.push({

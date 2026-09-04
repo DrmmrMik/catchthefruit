@@ -5,6 +5,7 @@ import { storageService } from '../services/storage.service';
 import { audioService } from '../services/audio.service';
 import { HUD } from '../ui/HUD';
 import { TeachingCard } from '../ui/TeachingCard';
+import { LevelIntroModal } from '../ui/LevelIntroModal';
 
 export interface GameSceneData {
   topic: TopicType;
@@ -101,11 +102,6 @@ export class GameScene extends Phaser.Scene {
       onPause: () => this.togglePause()
     });
 
-    // Spoken prompt via TTS on level start
-    if (initialQuestion?.spokenPrompt) {
-      audioService.speakPrompt(initialQuestion.spokenPrompt);
-    }
-
     // Princess Penelope Character Sprite standing on the orchard path (behind basket)
     this.princess = this.add.sprite(width / 2, height - 72, 'atlas', 'princess-idle-1');
     this.princess.setDisplaySize(80, 108);
@@ -137,8 +133,26 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // Start spawning question items
-    this.spawnNextQuestionWave();
+    // Extract unique target anchor words to show as helpful examples
+    const sampleWords = this.questions
+      .map((q) => q.targetAnswer)
+      .filter((w, idx, arr) => arr.indexOf(w) === idx)
+      .slice(0, 3);
+
+    // Present pre-level instructions screen before starting gameplay
+    new LevelIntroModal(this, {
+      topic: this.topic,
+      levelNumber: this.levelNumber,
+      title: levelConfig?.name ?? `Level ${this.levelNumber}`,
+      prompt: levelConfig?.prompt ?? initialQuestion?.prompt ?? 'Catch the Target Fruit!',
+      description: levelConfig?.description,
+      targetPatterns: levelConfig?.targetPatterns,
+      sampleWords,
+      onStart: () => {
+        // Start spawning question items once user clicks past intro instructions
+        this.spawnNextQuestionWave();
+      }
+    });
   }
 
   private togglePause(): void {
@@ -454,15 +468,6 @@ export class GameScene extends Phaser.Scene {
     const whyWrong = `"${fruit.option.text}" is not the target pattern!`;
     this.showFeedbackToast(whyWrong, '#ef4444');
 
-    // Re-speak target question prompt after an incorrect catch to reinforce objective
-    if (fruit.question.spokenPrompt && !mistakeResult.shouldTriggerRemediation) {
-      this.time.delayedCall(600, () => {
-        if (!this.isPaused && !this.isRemediating) {
-          audioService.speakPrompt(fruit.question.spokenPrompt!);
-        }
-      });
-    }
-
     // Check for 3 consecutive mistakes -> Trigger Teaching Card Remediation
     if (mistakeResult.shouldTriggerRemediation) {
       this.triggerRemediation(fruit);
@@ -492,7 +497,7 @@ export class GameScene extends Phaser.Scene {
       explanation: fruit.question.explanation ?? `Remember: look for the '${fruit.question.subTopic}' pattern!`,
       ruleTitle: `Let's Review: ${fruit.question.subTopic}`,
       topic: this.topic,
-      autoSpeak: true,
+      autoSpeak: false,
       onResume: () => {
         this.isRemediating = false;
         this.time.delayedCall(400, () => {

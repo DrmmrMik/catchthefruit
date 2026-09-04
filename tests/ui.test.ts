@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TeachingCard, TeachingCardConfig } from '../src/ui/TeachingCard';
 import { HUD } from '../src/ui/HUD';
 import { OrchardView } from '../src/ui/OrchardView';
+import { LevelIntroModal, LevelIntroModalConfig } from '../src/ui/LevelIntroModal';
 import { StorageService } from '../src/services/storage.service';
 import { IAudioSynthesizer } from '../src/services/audio.service';
 
@@ -568,6 +569,82 @@ describe('UI Components Unit Tests (Milestone 3)', () => {
       await orchard.refreshFromStorage();
       // orchardGrowthStage should now be 3 -> tree stage 3
       expect(orchard.getTreeStage()).toBe(3);
+    });
+  });
+
+  // ==========================================================================
+  // 4. LevelIntroModal (Pre-Level Instructions Screen)
+  // ==========================================================================
+  describe('LevelIntroModal (Pre-Level Instructions Screen)', () => {
+    it('instantiates LevelIntroModal and renders title, prompt, and anchor words', () => {
+      const startSpy = vi.fn();
+      const config: LevelIntroModalConfig = {
+        topic: 'phonics',
+        levelNumber: 1,
+        title: 'Vowel Teams: Long A (ai, ay)',
+        prompt: "Catch words with 'ai' and 'ay' that say /ā/ (like rain & day)!",
+        sampleWords: ['rain', 'day', 'train'],
+        onStart: startSpy,
+        audio: mockAudio
+      };
+
+      const modal = new LevelIntroModal(mockScene, config);
+      expect(modal.getTitle()).toBe('Vowel Teams: Long A (ai, ay)');
+      expect(modal.getPrompt()).toBe("Catch words with 'ai' and 'ay' that say /ā/ (like rain & day)!");
+      expect(mockScene.add.existing).toHaveBeenCalledWith(modal);
+    });
+
+    it('start button satisfies touch target requirements (>= 48px, 240x56px)', () => {
+      const modal = new LevelIntroModal(mockScene, {
+        topic: 'morphology',
+        levelNumber: 2,
+        title: 'Prefix Pioneers',
+        prompt: "Catch words with prefixes 'dis-' and 'pre-'!",
+        onStart: vi.fn(),
+        audio: mockAudio
+      });
+
+      const size = modal.getStartButtonSize();
+      expect(size.width).toBeGreaterThanOrEqual(48);
+      expect(size.height).toBeGreaterThanOrEqual(48);
+      expect(size.width).toBe(240);
+      expect(size.height).toBe(56);
+    });
+
+    it('dismiss() plays tactile click, invokes onStart callback, and emits start event', () => {
+      const startSpy = vi.fn();
+      const eventSpy = vi.fn();
+      const modal = new LevelIntroModal(mockScene, {
+        topic: 'vocabulary',
+        levelNumber: 1,
+        title: 'Synonym Seekers',
+        prompt: 'Catch words that mean the SAME (synonyms)!',
+        onStart: startSpy,
+        audio: mockAudio
+      });
+
+      modal.on('start', eventSpy);
+      modal.dismiss();
+
+      expect(mockAudio.playClick).toHaveBeenCalled();
+      expect(startSpy).toHaveBeenCalledTimes(1);
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('dismiss() is idempotent and avoids redundant onStart invocations', () => {
+      const startSpy = vi.fn();
+      const modal = new LevelIntroModal(mockScene, {
+        topic: 'math',
+        levelNumber: 1,
+        title: 'Addition Adventures',
+        prompt: 'Solve equations within 20!',
+        onStart: startSpy,
+        audio: mockAudio
+      });
+
+      modal.dismiss();
+      modal.dismiss();
+      expect(startSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
