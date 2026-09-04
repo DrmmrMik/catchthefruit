@@ -27,6 +27,7 @@ export class CastleScene extends Phaser.Scene {
   private princess?: Phaser.GameObjects.Sprite;
   private returnTo: string = 'MenuScene';
   private modalContainer?: Phaser.GameObjects.Container;
+  private isActionInProgress: boolean = false;
 
   private outsideSlots: SlotDefinition[] = [
     { id: 'banners', name: 'Tower Banners', category: 'outside', slotType: 'banners', x: 270, y: 190 },
@@ -419,6 +420,43 @@ export class CastleScene extends Phaser.Scene {
   // MODALS: INVENTORY PICKER & MARKETPLACE
   // ==========================================================================
 
+  private createModalBackdrop(width: number, height: number): Phaser.GameObjects.Rectangle {
+    const backdrop = this.add.rectangle(width / 2, height / 2, width, height, 0x071b2e, 0.85);
+    backdrop.setInteractive();
+    backdrop.on('pointerdown', () => {
+      audioService.playClick();
+      this.closeModal();
+    });
+    return backdrop;
+  }
+
+  private createCloseButton(x: number, y: number): Phaser.GameObjects.Container {
+    const btn = this.add.container(x, y);
+    const bg = this.add.graphics();
+    bg.fillStyle(0xf1f5f9, 1);
+    bg.lineStyle(1.5, 0x94a3b8, 1);
+    bg.fillCircle(0, 0, 18);
+    bg.strokeCircle(0, 0, 18);
+
+    const icon = this.add.text(0, 0, '✕', {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '18px',
+      color: '#475569',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    btn.add([bg, icon]);
+    btn.setSize(44, 44);
+    btn.setInteractive({ useHandCursor: true });
+    btn.on('pointerover', () => btn.setScale(1.08));
+    btn.on('pointerout', () => btn.setScale(1.0));
+    btn.on('pointerdown', () => {
+      audioService.playClick();
+      this.closeModal();
+    });
+    return btn;
+  }
+
   private openInventoryPicker(slot: SlotDefinition): void {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
@@ -429,18 +467,15 @@ export class CastleScene extends Phaser.Scene {
 
     this.closeModal();
 
-    this.modalContainer = this.add.container(0, 0).setDepth(30);
+    this.modalContainer = this.add.container(0, 0).setDepth(500);
 
-    // Dim backdrop
-    const backdrop = this.add.graphics();
-    backdrop.fillStyle(0x0f172a, 0.7);
-    backdrop.fillRect(0, 0, width, height);
-    backdrop.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
+    // Dim backdrop (tapping outside closes modal)
+    const backdrop = this.createModalBackdrop(width, height);
     this.modalContainer.add(backdrop);
 
     // Card Window
     const modalW = 440;
-    const modalH = 460;
+    const modalH = 470;
     const cardBg = this.add.graphics();
     cardBg.fillStyle(0xffffff, 1);
     cardBg.lineStyle(3, 0x0284c7, 1);
@@ -458,13 +493,7 @@ export class CastleScene extends Phaser.Scene {
     this.modalContainer.add(title);
 
     // Close button (X)
-    const closeBtn = this.add.text((width + modalW) / 2 - 25, (height - modalH) / 2 + 25, '✕', {
-      fontFamily: 'Lexend, sans-serif',
-      fontSize: '20px',
-      color: '#64748b',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.closeModal());
+    const closeBtn = this.createCloseButton((width + modalW) / 2 - 28, (height - modalH) / 2 + 32);
     this.modalContainer.add(closeBtn);
 
     if (availableItems.length === 0) {
@@ -479,7 +508,7 @@ export class CastleScene extends Phaser.Scene {
       const shopBtn = this.add.container(width / 2, height / 2 + 50);
       const sbg = this.add.graphics();
       sbg.fillStyle(0xd946ef, 1);
-      sbg.fillRoundedRect(-110, -20, 220, 40, 20);
+      sbg.fillRoundedRect(-110, -22, 220, 44, 16);
       const slbl = this.add.text(0, 0, '🛍️ Visit Marketplace', {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '14px',
@@ -487,8 +516,10 @@ export class CastleScene extends Phaser.Scene {
         fontStyle: 'bold'
       }).setOrigin(0.5);
       shopBtn.add([sbg, slbl]);
-      shopBtn.setSize(220, 40);
+      shopBtn.setSize(220, 44);
       shopBtn.setInteractive({ useHandCursor: true });
+      shopBtn.on('pointerover', () => shopBtn.setScale(1.03));
+      shopBtn.on('pointerout', () => shopBtn.setScale(1.0));
       shopBtn.on('pointerdown', () => {
         audioService.playClick();
         this.closeModal();
@@ -498,28 +529,28 @@ export class CastleScene extends Phaser.Scene {
       this.modalContainer.add([emptyText, shopBtn]);
     } else {
       // List owned items
-      let itemY = (height - modalH) / 2 + 80;
+      let itemY = (height - modalH) / 2 + 85;
       for (const item of availableItems) {
         const itemRow = this.add.container(width / 2, itemY);
 
         const rbg = this.add.graphics();
         rbg.fillStyle(0xf1f5f9, 1);
         rbg.lineStyle(1, 0xcbd5e1, 1);
-        rbg.fillRoundedRect(-190, -28, 380, 56, 12);
-        rbg.strokeRoundedRect(-190, -28, 380, 56, 12);
+        rbg.fillRoundedRect(-195, -28, 390, 56, 12);
+        rbg.strokeRoundedRect(-195, -28, 390, 56, 12);
 
-        const icon = this.add.image(-155, 0, 'atlas', item.icon).setDisplaySize(44, 44);
-        const name = this.add.text(-120, -10, item.name, {
+        const icon = this.add.image(-160, 0, 'atlas', item.icon).setDisplaySize(44, 44);
+        const name = this.add.text(-125, 0, item.name, {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '14px',
           color: '#0f172a',
           fontStyle: 'bold'
-        });
+        }).setOrigin(0, 0.5);
 
-        const placeBtn = this.add.container(130, 0);
+        const placeBtn = this.add.container(135, 0);
         const pbg = this.add.graphics();
         pbg.fillStyle(0x10b981, 1);
-        pbg.fillRoundedRect(-45, -16, 90, 32, 16);
+        pbg.fillRoundedRect(-48, -18, 96, 36, 14);
         const plbl = this.add.text(0, 0, 'Place', {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '13px',
@@ -527,15 +558,25 @@ export class CastleScene extends Phaser.Scene {
           fontStyle: 'bold'
         }).setOrigin(0.5);
         placeBtn.add([pbg, plbl]);
-        placeBtn.setSize(90, 32);
+        placeBtn.setSize(96, 36);
         placeBtn.setInteractive({ useHandCursor: true });
+        placeBtn.on('pointerover', () => placeBtn.setScale(1.04));
+        placeBtn.on('pointerout', () => placeBtn.setScale(1.0));
         placeBtn.on('pointerdown', async () => {
-          audioService.playCatch(true);
-          await storageService.placeDecoration(slot.category, slot.id, item.id);
-          await this.refreshStorageData();
-          this.closeModal();
-          this.renderSlots();
-          this.celebratePrincess();
+          if (this.isActionInProgress) return;
+          this.isActionInProgress = true;
+          try {
+            audioService.playCatch(true);
+            await storageService.placeDecoration(slot.category, slot.id, item.id);
+            await this.refreshStorageData();
+            this.closeModal();
+            this.renderSlots();
+            this.celebratePrincess();
+          } catch (err) {
+            console.error('Failed to place decoration:', err);
+          } finally {
+            this.isActionInProgress = false;
+          }
         });
 
         itemRow.add([rbg, icon, name, placeBtn]);
@@ -550,16 +591,13 @@ export class CastleScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     this.closeModal();
-    this.modalContainer = this.add.container(0, 0).setDepth(30);
+    this.modalContainer = this.add.container(0, 0).setDepth(500);
 
-    const backdrop = this.add.graphics();
-    backdrop.fillStyle(0x0f172a, 0.7);
-    backdrop.fillRect(0, 0, width, height);
-    backdrop.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
+    const backdrop = this.createModalBackdrop(width, height);
     this.modalContainer.add(backdrop);
 
-    const modalW = 380;
-    const modalH = 320;
+    const modalW = 400;
+    const modalH = 340;
     const cardBg = this.add.graphics();
     cardBg.fillStyle(0xffffff, 1);
     cardBg.lineStyle(3, 0x0284c7, 1);
@@ -576,10 +614,10 @@ export class CastleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Swap Button
-    const swapBtn = this.add.container(width / 2, (height - modalH) / 2 + 180);
+    const swapBtn = this.add.container(width / 2, (height - modalH) / 2 + 185);
     const sbg = this.add.graphics();
     sbg.fillStyle(0x0284c7, 1);
-    sbg.fillRoundedRect(-110, -20, 220, 40, 20);
+    sbg.fillRoundedRect(-115, -22, 230, 44, 16);
     const slbl = this.add.text(0, 0, '🔄 Swap Item', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
@@ -587,18 +625,20 @@ export class CastleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
     swapBtn.add([sbg, slbl]);
-    swapBtn.setSize(220, 40);
+    swapBtn.setSize(230, 44);
     swapBtn.setInteractive({ useHandCursor: true });
+    swapBtn.on('pointerover', () => swapBtn.setScale(1.03));
+    swapBtn.on('pointerout', () => swapBtn.setScale(1.0));
     swapBtn.on('pointerdown', () => {
       audioService.playClick();
       this.openInventoryPicker(slot);
     });
 
     // Remove Button
-    const removeBtn = this.add.container(width / 2, (height - modalH) / 2 + 235);
+    const removeBtn = this.add.container(width / 2, (height - modalH) / 2 + 245);
     const rbg = this.add.graphics();
     rbg.fillStyle(0xef4444, 1);
-    rbg.fillRoundedRect(-110, -20, 220, 40, 20);
+    rbg.fillRoundedRect(-115, -22, 230, 44, 16);
     const rlbl = this.add.text(0, 0, '🗑️ Put in Storage', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
@@ -606,24 +646,28 @@ export class CastleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
     removeBtn.add([rbg, rlbl]);
-    removeBtn.setSize(220, 40);
+    removeBtn.setSize(230, 44);
     removeBtn.setInteractive({ useHandCursor: true });
+    removeBtn.on('pointerover', () => removeBtn.setScale(1.03));
+    removeBtn.on('pointerout', () => removeBtn.setScale(1.0));
     removeBtn.on('pointerdown', async () => {
-      audioService.playClick();
-      await storageService.removeDecoration(slot.category, slot.id);
-      await this.refreshStorageData();
-      this.closeModal();
-      this.renderSlots();
+      if (this.isActionInProgress) return;
+      this.isActionInProgress = true;
+      try {
+        audioService.playClick();
+        await storageService.removeDecoration(slot.category, slot.id);
+        await this.refreshStorageData();
+        this.closeModal();
+        this.renderSlots();
+      } catch (err) {
+        console.error('Failed to remove decoration:', err);
+      } finally {
+        this.isActionInProgress = false;
+      }
     });
 
     // Close button (X)
-    const closeBtn = this.add.text((width + modalW) / 2 - 25, (height - modalH) / 2 + 25, '✕', {
-      fontFamily: 'Lexend, sans-serif',
-      fontSize: '20px',
-      color: '#64748b',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.closeModal());
+    const closeBtn = this.createCloseButton((width + modalW) / 2 - 28, (height - modalH) / 2 + 30);
 
     this.modalContainer.add([icon, title, swapBtn, removeBtn, closeBtn]);
   }
@@ -633,50 +677,68 @@ export class CastleScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     this.closeModal();
-    this.modalContainer = this.add.container(0, 0).setDepth(30);
+    this.modalContainer = this.add.container(0, 0).setDepth(500);
 
-    const backdrop = this.add.graphics();
-    backdrop.fillStyle(0x0f172a, 0.75);
-    backdrop.fillRect(0, 0, width, height);
-    backdrop.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
+    // Dim backdrop (tapping outside closes modal)
+    const backdrop = this.createModalBackdrop(width, height);
     this.modalContainer.add(backdrop);
 
-    const modalW = 480;
-    const modalH = 680;
-    const modalY = (height - modalH) / 2;
+    const modalW = 460;
+    const modalH = 720;
+    const modalY = Math.max(10, (height - modalH) / 2);
 
     const cardBg = this.add.graphics();
     cardBg.fillStyle(0xffffff, 1);
     cardBg.lineStyle(3, 0xd946ef, 1);
-    cardBg.fillRoundedRect((width - modalW) / 2, modalY, modalW, modalH, 24);
-    cardBg.strokeRoundedRect((width - modalW) / 2, modalY, modalW, modalH, 24);
+    cardBg.fillRoundedRect((width - modalW) / 2, modalY, modalW, modalH, 20);
+    cardBg.strokeRoundedRect((width - modalW) / 2, modalY, modalW, modalH, 20);
     this.modalContainer.add(cardBg);
 
     // Header
-    const title = this.add.text(width / 2, modalY + 36, '🛍️ ROYAL MARKETPLACE 🛍️', {
+    const title = this.add.text(width / 2, modalY + 34, '🛍️ ROYAL MARKETPLACE 🛍️', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '20px',
       color: '#c026d3',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const subtitle = this.add.text(width / 2, modalY + 62, `Balance: ${this.coins} Princess Coins 🪙`, {
+    const subtitle = this.add.text(width / 2, modalY + 60, `Balance: ${this.coins} Princess Coins 🪙`, {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
       color: '#d97706',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Close button (X)
-    const closeBtn = this.add.text((width + modalW) / 2 - 28, modalY + 32, '✕', {
-      fontFamily: 'Lexend, sans-serif',
-      fontSize: '22px',
-      color: '#64748b',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.closeModal());
+    // Top Right Close button (✕)
+    const closeBtn = this.createCloseButton((width + modalW) / 2 - 28, modalY + 32);
 
     this.modalContainer.add([title, subtitle, closeBtn]);
+
+    // Bottom Return Button
+    const returnBtn = this.add.container(width / 2, modalY + modalH - 34);
+    const retBg = this.add.graphics();
+    retBg.fillStyle(0x0284c7, 1); // Sky 600
+    retBg.lineStyle(2, 0x0369a1, 1);
+    retBg.fillRoundedRect(-120, -22, 240, 44, 16);
+    retBg.strokeRoundedRect(-120, -22, 240, 44, 16);
+
+    const retText = this.add.text(0, 0, '← Back to Castle', {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '15px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    returnBtn.add([retBg, retText]);
+    returnBtn.setSize(240, 44);
+    returnBtn.setInteractive({ useHandCursor: true });
+    returnBtn.on('pointerover', () => returnBtn.setScale(1.03));
+    returnBtn.on('pointerout', () => returnBtn.setScale(1.0));
+    returnBtn.on('pointerdown', () => {
+      audioService.playClick();
+      this.closeModal();
+    });
+    this.modalContainer.add(returnBtn);
 
     // Marketplace Category Tabs
     let activeMarketCategory: DecorationCategory = this.currentView;
@@ -692,7 +754,12 @@ export class CastleScene extends Phaser.Scene {
       const itemsGroup = this.add.container(0, 0);
       (this.modalContainer as any).__itemsGroup = itemsGroup;
 
-      let rowY = modalY + 145;
+      const rowCount = items.length;
+      const rowHeight = rowCount > 6 ? 56 : 62;
+      const gap = rowCount > 6 ? 6 : 8;
+      const step = rowHeight + gap;
+      let rowY = modalY + 148 + rowHeight / 2;
+
       for (const item of items) {
         const isOwned = this.inventory.includes(item.id);
         const canAfford = this.coins >= item.price;
@@ -701,19 +768,19 @@ export class CastleScene extends Phaser.Scene {
         const rbg = this.add.graphics();
         rbg.fillStyle(isOwned ? 0xf0fdf4 : 0xf8fafc, 1);
         rbg.lineStyle(1.5, isOwned ? 0x86efac : 0xe2e8f0, 1);
-        rbg.fillRoundedRect(-215, -34, 430, 68, 14);
-        rbg.strokeRoundedRect(-215, -34, 430, 68, 14);
+        rbg.fillRoundedRect(-215, -rowHeight / 2, 430, rowHeight, 12);
+        rbg.strokeRoundedRect(-215, -rowHeight / 2, 430, rowHeight, 12);
 
-        const icon = this.add.image(-175, 0, 'atlas', item.icon).setDisplaySize(54, 54);
+        const icon = this.add.image(-175, 0, 'atlas', item.icon).setDisplaySize(46, 46);
 
-        const name = this.add.text(-135, -20, item.name, {
+        const name = this.add.text(-140, -14, item.name, {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '13px',
           color: '#0f172a',
           fontStyle: 'bold'
         });
 
-        const desc = this.add.text(-135, 0, item.description, {
+        const desc = this.add.text(-140, 4, item.description, {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '10px',
           color: '#64748b',
@@ -721,8 +788,10 @@ export class CastleScene extends Phaser.Scene {
         });
 
         // Price / Status Button
-        const buyBtn = this.add.container(160, 0);
+        const buyBtn = this.add.container(152, 0);
         const bbg = this.add.graphics();
+        const btnW = 96;
+        const btnH = 38;
         let btnText = '';
 
         if (isOwned) {
@@ -731,24 +800,12 @@ export class CastleScene extends Phaser.Scene {
         } else if (canAfford) {
           bbg.fillStyle(0xd946ef, 1);
           btnText = `${item.price} 🪙`;
-          buyBtn.setInteractive({ useHandCursor: true });
-          buyBtn.on('pointerdown', async () => {
-            const success = await storageService.purchaseItem(item.id, item.price);
-            if (success) {
-              audioService.playCatch(true);
-              await this.refreshStorageData();
-              this.coinText.setText(`${this.coins}`);
-              subtitle.setText(`Balance: ${this.coins} Princess Coins 🪙`);
-              renderCatalog(activeMarketCategory);
-              this.renderSlots();
-            }
-          });
         } else {
           bbg.fillStyle(0x94a3b8, 1);
           btnText = `${item.price} 🪙`;
         }
 
-        bbg.fillRoundedRect(-45, -16, 90, 32, 16);
+        bbg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 14);
         const blbl = this.add.text(0, 0, btnText, {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '12px',
@@ -757,22 +814,49 @@ export class CastleScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         buyBtn.add([bbg, blbl]);
-        buyBtn.setSize(90, 32);
+        // Set size BEFORE setInteractive so Phaser has valid hitArea dimensions!
+        buyBtn.setSize(btnW, btnH);
+
+        if (!isOwned && canAfford) {
+          buyBtn.setInteractive({ useHandCursor: true });
+          buyBtn.on('pointerover', () => buyBtn.setScale(1.05));
+          buyBtn.on('pointerout', () => buyBtn.setScale(1.0));
+          buyBtn.on('pointerdown', async () => {
+            if (this.isActionInProgress) return;
+            this.isActionInProgress = true;
+            try {
+              audioService.playClick();
+              const success = await storageService.purchaseItem(item.id, item.price);
+              if (success) {
+                audioService.playCatch(true);
+                await this.refreshStorageData();
+                this.coinText.setText(`${this.coins}`);
+                subtitle.setText(`Balance: ${this.coins} Princess Coins 🪙`);
+                renderCatalog(activeMarketCategory);
+                this.renderSlots();
+              }
+            } catch (err) {
+              console.error('Failed to purchase item:', err);
+            } finally {
+              this.isActionInProgress = false;
+            }
+          });
+        }
 
         row.add([rbg, icon, name, desc, buyBtn]);
         itemsGroup.add(row);
-        rowY += 76;
+        rowY += step;
       }
 
       this.modalContainer?.add(itemsGroup);
     };
 
     // Category Tabs in Marketplace
-    const tabOutside = this.createTabButton(width / 2 - 100, modalY + 100, '🌸 Outside Decor', activeMarketCategory === 'outside', () => {
+    const tabOutside = this.createTabButton(width / 2 - 100, modalY + 98, '🌸 Outside Decor', activeMarketCategory === 'outside', () => {
       renderCatalog('outside');
     });
 
-    const tabInside = this.createTabButton(width / 2 + 100, modalY + 100, '🛋️ Inside Furniture', activeMarketCategory === 'inside', () => {
+    const tabInside = this.createTabButton(width / 2 + 100, modalY + 98, '🛋️ Inside Furniture', activeMarketCategory === 'inside', () => {
       renderCatalog('inside');
     });
 
