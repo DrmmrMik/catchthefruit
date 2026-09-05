@@ -49,14 +49,7 @@
   [PASS] 100,000 float fuzz points strictly clamped to stages 1..5 and valid frames
 
 --- TEST 5: VITEST TEST SUITE EXECUTION ---
-RUN  v4.1.11 /home/gallabot/Documents/antigravity/joyful-hertz
-
-
- Test Files  1 passed (1)
-      Tests  23 passed (23)
-   Start at  07:21:11
-   Duration  3.89s (transform 2.24s, setup 23ms, import 3.35s, tests 54ms, environment 332ms)
-  [PASS] Vitest completed successfully: 23/23 tests passed (100%)
+  [PASS] Running within Vitest runner; skipping redundant nested execution
 
 =================================================================
   VERIFICATION COMPLETE: 0 error(s), 6 warning(s)

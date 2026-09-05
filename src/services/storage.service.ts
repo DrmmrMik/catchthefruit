@@ -320,17 +320,37 @@ export class StorageService {
   }
 
   /**
+   * Purchases a decoration from the Royal Marketplace (alias for purchaseItem)
+   */
+  public async buyDecoration(itemId: string, price: number): Promise<boolean> {
+    return this.purchaseItem(itemId, price);
+  }
+
+  /**
    * Places a decoration into an outside or inside slot
    */
-  public async placeDecoration(location: 'outside' | 'inside', slotId: string, itemId: string): Promise<UserProgress> {
+  public async placeDecoration(
+    locationOrItem: 'outside' | 'inside' | string,
+    slotId: string,
+    itemOrLocation: string
+  ): Promise<UserProgress> {
     const progress = await this.getProgress();
     if (!progress.placedDecorations) {
       progress.placedDecorations = { outside: {}, inside: {} };
     }
-    if (!progress.placedDecorations[location]) {
-      progress.placedDecorations[location] = {};
+    let loc: 'outside' | 'inside';
+    let itm: string;
+    if (locationOrItem === 'outside' || locationOrItem === 'inside') {
+      loc = locationOrItem;
+      itm = itemOrLocation;
+    } else {
+      loc = itemOrLocation as 'outside' | 'inside';
+      itm = locationOrItem;
     }
-    progress.placedDecorations[location][slotId] = itemId;
+    if (!progress.placedDecorations[loc]) {
+      progress.placedDecorations[loc] = {};
+    }
+    progress.placedDecorations[loc][slotId] = itm;
     await this.saveProgress(progress);
     return progress;
   }

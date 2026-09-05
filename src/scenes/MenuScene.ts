@@ -27,6 +27,12 @@ export class MenuScene extends Phaser.Scene {
     super({ key: 'MenuScene' });
   }
 
+  init(data?: { topic?: TopicType }): void {
+    if (data?.topic) {
+      this.selectedTopic = data.topic;
+    }
+  }
+
   async create(): Promise<void> {
     this.cameras.main.setBackgroundColor('#f0f9ff');
     const width = this.cameras.main.width;

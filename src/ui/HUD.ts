@@ -168,6 +168,7 @@ export class HUD extends Phaser.GameObjects.Container {
     this.bannerContainer.setInteractive({ useHandCursor: true });
     this.bannerContainer.on('pointerdown', () => {
       this.audio.playClick();
+      this.speakPrompt();
       scene.tweens.add({
         targets: this.bannerContainer,
         scaleX: 1.02,

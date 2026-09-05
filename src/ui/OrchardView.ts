@@ -172,7 +172,7 @@ export class OrchardView extends Phaser.GameObjects.Container {
     ];
 
     const tabWidth = 105;
-    const tabHeight = 44;
+    const tabHeight = 48;
     const startX = 60;
     const tabY = 245;
 

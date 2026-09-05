@@ -131,7 +131,7 @@ export class RoundSummaryScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Buttons Container
-    let btnY = 450;
+    let btnY = 445;
 
     // 1. Next Level Button (if mastered and next level exists)
     const nextLevel = curriculumService.getLevel(this.summaryData.topic, this.summaryData.levelNumber + 1);
@@ -142,7 +142,7 @@ export class RoundSummaryScene extends Phaser.Scene {
           levelNumber: this.summaryData.levelNumber + 1
         });
       });
-      btnY += 48;
+      btnY += 56;
     }
 
     // 2. Play Again Button
@@ -152,30 +152,31 @@ export class RoundSummaryScene extends Phaser.Scene {
         levelNumber: this.summaryData.levelNumber
       });
     });
-    btnY += 48;
+    btnY += 56;
 
     // 3. Castle & Marketplace Button
     this.createButton(width / 2, btnY, 'VISIT CASTLE & SHOP 🏰', 0xd946ef, () => {
       this.scene.start('CastleScene', { returnTo: 'MenuScene' });
     });
-    btnY += 48;
+    btnY += 56;
 
     // 4. Orchard View Button
     this.createButton(width / 2, btnY, 'VISIT ORCHARD 🌳', 0x8b5cf6, () => {
       this.scene.start('OrchardScene', { returnTo: 'MenuScene' });
     });
 
-    // 4. Main Menu Button (bottom)
-    const menuBtn = this.add.text(width / 2, height - 50, '◀ Back to Main Menu', {
+    // 5. Main Menu Button (bottom)
+    const menuBtn = this.add.text(width / 2, height - 38, '◀ Back to Main Menu', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
       color: '#64748b',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      padding: { top: 15, bottom: 15, left: 24, right: 24 }
     }).setOrigin(0.5);
     menuBtn.setInteractive({ useHandCursor: true });
     menuBtn.on('pointerdown', () => {
       audioService.playClick();
-      this.scene.start('MenuScene');
+      this.scene.start('MenuScene', { topic: this.summaryData.topic });
     });
   }
 
@@ -184,7 +185,7 @@ export class RoundSummaryScene extends Phaser.Scene {
 
     const bg = this.add.graphics();
     bg.fillStyle(color, 1);
-    bg.fillRoundedRect(-140, -22, 280, 46, 14);
+    bg.fillRoundedRect(-140, -26, 280, 52, 14);
 
     const text = this.add.text(0, 0, label, {
       fontFamily: 'Lexend, sans-serif',
@@ -194,8 +195,11 @@ export class RoundSummaryScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     btn.add([bg, text]);
-    btn.setSize(280, 46);
-    btn.setInteractive({ useHandCursor: true });
+    btn.setSize(280, 52);
+    btn.setInteractive(
+      new Phaser.Geom.Rectangle(-140, -26, 280, 52),
+      Phaser.Geom.Rectangle.Contains
+    );
     btn.on('pointerdown', () => {
       audioService.playClick();
       onClick();

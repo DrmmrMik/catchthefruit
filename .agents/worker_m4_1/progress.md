@@ -1,0 +1,43 @@
+# Progress — Worker M4-1
+
+Last visited: 2026-09-05T15:53:00Z
+
+- [x] Initial setup: DISPATCH.md, BRIEFING.md, progress.md created.
+- [x] Read mandatory input documents:
+  - ORIGINAL_REQUEST.md
+  - STACK.md
+  - orchestrator_1/PROJECT.md
+  - SPEC.md
+  - reviewer_m3_3/review.md
+  - explorer_m4_1/handoff.md
+  - explorer_m4_2/handoff.md
+  - explorer_m4_3/handoff.md
+- [x] Task 1: Resolve BSA Stack Dependencies & Cold-Start Timeout:
+  - Added "free-tex-packer-core": "^0.3.4" to package.json devDependencies.
+  - Created requirements.txt with pillow>=10.0.0, numpy>=1.24.0, pyyaml>=6.0.
+  - Increased timeout in tests/ui_adversarial.test.ts to 45000ms.
+  - Streamlined scripts/adversarial_ui_verify.py to avoid nested Vitest when within Vitest.
+  - Verified BSA stack verification passes 6/6 required packages.
+- [x] Task 2: Implement Milestone 4 Core Gameplay & Pedagogical Engine:
+  - Fall speed scaling in GameScene.ts (removed * 2 multiplier; 2800ms -> 1800ms).
+  - Centered container hitArea geometry (>=48px diameter, Rectangle(-w/2, -h/2, w, h)).
+  - Wave spawn timer reference management & race condition elimination on 3rd mistake.
+  - Morphological visual segmentation toast & TeachingCard property wiring.
+  - Remediation TTS auto-vocalization via audioService.isTtsEnabled().
+  - Mastery alignment with isMasteryAchieved helper (>85% over 10+ attempts).
+  - Live HUD star synchronization in create() and on catches.
+  - Basket controls: bottom canvas tap-to-move and keyboard arrows/A-D listeners.
+  - Pause overlay: interactive backdrop and clean toggle destruction.
+  - HUD prompt banner click: wired to speakPrompt().
+  - RoundSummaryScene button heights: increased to 52px (>= 48px).
+  - MenuScene topic memory: added init(data?: { topic?: TopicType }).
+  - OrchardView topic tab height: increased to 48px.
+- [x] Task 3: Comprehensive Gameplay Unit Tests:
+  - Created tests/gameplay.test.ts with 10 suites covering physics, 60Hz/120Hz delta invariance, fall duration scaling, hitAreas, controls, segmentation, remediation, mastery, stars, touch dimensions, and topic memory. All 19 tests pass.
+- [x] Task 4: Full Verification:
+  - npm run typecheck (tsc --noEmit) PASS (0 errors)
+  - npm test (vitest run) PASS (16/16 test files, 367/367 tests pass)
+  - npm run build (vite build) PASS (built in 1.29s)
+  - ~/.build-standards/bin/bsa verify PASS (6/6 required packages present, 0 forbidden patterns)
+  - python3 validate_pwa.py dist PASS (0 errors, 0 warnings)
+- [x] Write handoff report and notify parent.

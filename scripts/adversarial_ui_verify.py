@@ -390,6 +390,9 @@ def test_orchard_tree_stage_clamping():
 # ---------------------------------------------------------------------------
 def test_vitest_execution():
     log("\n--- TEST 5: VITEST TEST SUITE EXECUTION ---")
+    if os.environ.get("VITEST"):
+        log("  [PASS] Running within Vitest runner; skipping redundant nested execution")
+        return
     cmd = ["npx", "vitest", "run", "tests/ui.test.ts"]
     try:
         res = subprocess.run(

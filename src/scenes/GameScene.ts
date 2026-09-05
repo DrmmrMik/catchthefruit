@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TopicType, CurriculumItem, OptionItem } from '../schema/curriculum.schema';
 import { curriculumService } from '../services/curriculum.service';
-import { storageService } from '../services/storage.service';
+import { storageService, isMasteryAchieved, calculateStars } from '../services/storage.service';
 import { audioService } from '../services/audio.service';
 import { HUD } from '../ui/HUD';
 import { TeachingCard } from '../ui/TeachingCard';
@@ -40,8 +40,14 @@ export class GameScene extends Phaser.Scene {
   private correctAttempts: number = 0;
   private isPaused: boolean = false;
   private isRemediating: boolean = false;
-  private fallDurationMs: number = 5200;
+  private fallDurationMs: number = 2800;
   private roundCoinsEarned: number = 0;
+
+  private waveSpawnTimer?: Phaser.Time.TimerEvent;
+  private pauseOverlay?: Phaser.GameObjects.Container;
+  private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
+  private keyA?: Phaser.Input.Keyboard.Key;
+  private keyD?: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -58,6 +64,17 @@ export class GameScene extends Phaser.Scene {
     this.activeFruits = [];
     this.isPaused = false;
     this.isRemediating = false;
+    this.fallDurationMs = 2800;
+    this.roundCoinsEarned = 0;
+
+    if (this.waveSpawnTimer) {
+      this.waveSpawnTimer.remove();
+      this.waveSpawnTimer = undefined;
+    }
+    if (this.pauseOverlay) {
+      this.pauseOverlay.destroy();
+      this.pauseOverlay = undefined;
+    }
   }
 
   create(): void {
@@ -87,8 +104,8 @@ export class GameScene extends Phaser.Scene {
     // Load curriculum question set for this level (12 items)
     this.questions = curriculumService.generateQuestionSet(this.topic, this.levelNumber, 12);
     const levelConfig = curriculumService.getLevel(this.topic, this.levelNumber);
-    // Half-speed drop: double the duration for gentle, accessible 2nd grade gameplay
-    this.fallDurationMs = (levelConfig?.fallSpeedDurationMs ?? 2600) * 2;
+    // Grade 2 scaffolded fall duration: 2800ms down to 1800ms
+    this.fallDurationMs = levelConfig?.fallSpeedDurationMs ?? 2800;
 
     const initialQuestion = this.questions[0];
 
@@ -100,6 +117,12 @@ export class GameScene extends Phaser.Scene {
       prompt: initialQuestion?.prompt ?? 'Catch the Fruit!',
       subtext: 'Tap the fruit or catch with basket',
       onPause: () => this.togglePause()
+    });
+
+    // Synchronize initial star rating from storage
+    storageService.getProgress().then((progress) => {
+      const levelStars = progress.stars[`${this.topic}_${this.levelNumber}`] ?? 0;
+      this.hud.updateStars(levelStars);
     });
 
     // Princess Penelope Character Sprite standing on the orchard path (behind basket)
@@ -124,6 +147,15 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
+    // Tap to move basket directly
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.y > height - 140 && !this.isPaused && !this.isRemediating) {
+        const clampedX = Phaser.Math.Clamp(pointer.x, 55, width - 55);
+        this.basket.x = clampedX;
+        if (this.princess) this.princess.x = clampedX;
+      }
+    });
+
     // Touch pointer drag across screen moves basket and Princess directly
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown && pointer.y > height - 140 && !this.isPaused && !this.isRemediating) {
@@ -132,6 +164,11 @@ export class GameScene extends Phaser.Scene {
         if (this.princess) this.princess.x = clampedX;
       }
     });
+
+    // Desktop keyboard arrow & A/D controls
+    this.cursors = this.input.keyboard?.createCursorKeys();
+    this.keyA = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.keyD = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
     // Extract unique target anchor words to show as helpful examples
     const sampleWords = this.questions
@@ -161,8 +198,10 @@ export class GameScene extends Phaser.Scene {
       const width = this.cameras.main.width;
       const height = this.cameras.main.height;
 
-      const pauseOverlay = this.add.container(width / 2, height / 2).setName('pauseOverlay').setDepth(800);
+      this.pauseOverlay = this.add.container(width / 2, height / 2).setName('pauseOverlay').setDepth(800);
       const bg = this.add.rectangle(0, 0, width, height, 0x0f172a, 0.7);
+      bg.setInteractive(); // Intercepts clicks on backdrop
+
       const pauseCard = this.add.graphics();
       pauseCard.fillStyle(0xffffff, 1);
       pauseCard.fillRoundedRect(-140, -100, 280, 200, 20);
@@ -177,7 +216,7 @@ export class GameScene extends Phaser.Scene {
       const resumeBtn = this.add.container(0, 10);
       const resumeBg = this.add.graphics();
       resumeBg.fillStyle(0x0284c7, 1);
-      resumeBg.fillRoundedRect(-90, -22, 180, 44, 12);
+      resumeBg.fillRoundedRect(-90, -24, 180, 48, 12);
       const resumeText = this.add.text(0, 0, 'RESUME ▶', {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '15px',
@@ -185,18 +224,20 @@ export class GameScene extends Phaser.Scene {
         fontStyle: 'bold'
       }).setOrigin(0.5);
       resumeBtn.add([resumeBg, resumeText]);
-      resumeBtn.setSize(180, 44);
-      resumeBtn.setInteractive({ useHandCursor: true });
+      resumeBtn.setSize(180, 48);
+      resumeBtn.setInteractive(
+        new Phaser.Geom.Rectangle(-90, -24, 180, 48),
+        Phaser.Geom.Rectangle.Contains
+      );
       resumeBtn.on('pointerdown', () => {
         audioService.playClick();
-        pauseOverlay.destroy();
-        this.isPaused = false;
+        this.togglePause();
       });
 
-      const quitBtn = this.add.container(0, 65);
+      const quitBtn = this.add.container(0, 68);
       const quitBg = this.add.graphics();
       quitBg.fillStyle(0xe2e8f0, 1);
-      quitBg.fillRoundedRect(-90, -20, 180, 40, 10);
+      quitBg.fillRoundedRect(-90, -24, 180, 48, 10);
       const quitText = this.add.text(0, 0, 'MAIN MENU', {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '13px',
@@ -204,21 +245,29 @@ export class GameScene extends Phaser.Scene {
         fontStyle: 'bold'
       }).setOrigin(0.5);
       quitBtn.add([quitBg, quitText]);
-      quitBtn.setSize(180, 40);
-      quitBtn.setInteractive({ useHandCursor: true });
+      quitBtn.setSize(180, 48);
+      quitBtn.setInteractive(
+        new Phaser.Geom.Rectangle(-90, -24, 180, 48),
+        Phaser.Geom.Rectangle.Contains
+      );
       quitBtn.on('pointerdown', () => {
         audioService.playClick();
-        this.scene.start('MenuScene');
+        this.scene.start('MenuScene', { topic: this.topic });
       });
 
-      pauseOverlay.add([bg, pauseCard, pausedTitle, resumeBtn, quitBtn]);
+      this.pauseOverlay.add([bg, pauseCard, pausedTitle, resumeBtn, quitBtn]);
+    } else {
+      if (this.pauseOverlay) {
+        this.pauseOverlay.destroy();
+        this.pauseOverlay = undefined;
+      }
     }
   }
 
   private spawnNextQuestionWave(): void {
     if (this.currentQuestionIndex >= this.questions.length) {
       // All questions completed! End round
-      this.time.delayedCall(1200, () => {
+      this.waveSpawnTimer = this.time.delayedCall(1200, () => {
         this.finishLevel();
       });
       return;
@@ -268,7 +317,9 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     container.add([sprite, pillBg, label]);
-    container.setSize(Math.max(pillW, 64), 74);
+    const hitWidth = Math.max(pillW, 64);
+    const hitHeight = 74;
+    container.setSize(hitWidth, hitHeight);
 
     // Calculate fall speed (pixels per second to cross 600px in fallDurationMs)
     const speed = 600 / (this.fallDurationMs / 1000);
@@ -284,8 +335,11 @@ export class GameScene extends Phaser.Scene {
       hasMissed: false
     };
 
-    // Tap-to-Catch Handler (Direct touch accessibility)
-    container.setInteractive({ useHandCursor: true });
+    // Tap-to-Catch Handler (Centered touch hitArea >= 48px in both dimensions)
+    container.setInteractive(
+      new Phaser.Geom.Rectangle(-hitWidth / 2, -hitHeight / 2, hitWidth, hitHeight),
+      Phaser.Geom.Rectangle.Contains
+    );
     container.on('pointerdown', () => {
       if (!this.isPaused && !this.isRemediating && !activeFruit.isCaught) {
         this.catchFruit(activeFruit);
@@ -299,7 +353,23 @@ export class GameScene extends Phaser.Scene {
     if (this.isPaused || this.isRemediating) return;
 
     const deltaSeconds = delta / 1000;
+    const width = this.cameras.main.width;
     const height = this.cameras.main.height;
+
+    // Desktop keyboard controls
+    if (this.cursors || this.keyA || this.keyD) {
+      const isLeft = (this.cursors?.left.isDown || this.keyA?.isDown) ?? false;
+      const isRight = (this.cursors?.right.isDown || this.keyD?.isDown) ?? false;
+      if (isLeft) {
+        const nextX = Phaser.Math.Clamp(this.basket.x - 400 * deltaSeconds, 55, width - 55);
+        this.basket.x = nextX;
+        if (this.princess) this.princess.x = nextX;
+      } else if (isRight) {
+        const nextX = Phaser.Math.Clamp(this.basket.x + 400 * deltaSeconds, 55, width - 55);
+        this.basket.x = nextX;
+        if (this.princess) this.princess.x = nextX;
+      }
+    }
 
     for (let i = this.activeFruits.length - 1; i >= 0; i--) {
       const fruit = this.activeFruits[i]!;
@@ -329,8 +399,8 @@ export class GameScene extends Phaser.Scene {
         this.activeFruits.splice(i, 1);
 
         // Check if screen is clear to spawn next wave
-        if (this.activeFruits.length === 0) {
-          this.time.delayedCall(400, () => {
+        if (this.activeFruits.length === 0 && !this.isRemediating && !this.isPaused) {
+          this.waveSpawnTimer = this.time.delayedCall(400, () => {
             this.spawnNextQuestionWave();
           });
         }
@@ -346,6 +416,10 @@ export class GameScene extends Phaser.Scene {
     if (fruit.option.isCorrect) {
       this.handleCorrectCatch(fruit);
     } else {
+      // Guard race condition: if this is mistake #3, flag early to prevent wave timer spawn
+      if (storageService.getConsecutiveMistakes() >= 2) {
+        this.isRemediating = true;
+      }
       this.handleIncorrectCatch(fruit);
     }
 
@@ -377,7 +451,7 @@ export class GameScene extends Phaser.Scene {
 
         // If no remediation is active, spawn next wave
         if (!this.isRemediating && !this.isPaused) {
-          this.time.delayedCall(500, () => {
+          this.waveSpawnTimer = this.time.delayedCall(500, () => {
             this.spawnNextQuestionWave();
           });
         }
@@ -414,11 +488,18 @@ export class GameScene extends Phaser.Scene {
     // Update HUD
     this.hud.updateScore(this.score);
     this.hud.updateCombo(this.combo);
+    const correctAccuracy = this.totalAttempts > 0 ? (this.correctAttempts / this.totalAttempts) * 100 : 100;
+    this.hud.updateStars(calculateStars(correctAccuracy));
 
-    // Explanatory Positive Feedback Flash Banner
-    const explanation = fruit.option.explanation || fruit.question.explanation;
-    if (explanation) {
-      this.showFeedbackToast(explanation, '#10b981');
+    // Explanatory Positive Feedback Flash Banner / Visual Morphological Segmentation
+    const rawItem = curriculumService.getItemById(fruit.question.id);
+    if (this.topic === 'morphology' && rawItem && 'visualSegmentation' in rawItem) {
+      this.showFeedbackToast(`✨ ${rawItem.visualSegmentation}`, '#10b981');
+    } else {
+      const explanation = fruit.option.explanation || fruit.question.explanation;
+      if (explanation) {
+        this.showFeedbackToast(explanation, '#10b981');
+      }
     }
 
     // Princess Penelope celebrates with a victory hop and sparkle fountain
@@ -445,6 +526,8 @@ export class GameScene extends Phaser.Scene {
     // Deduct points (clamped to 0)
     this.score = Math.max(0, this.score - 25);
     this.hud.updateScore(this.score);
+    const incorrectAccuracy = this.totalAttempts > 0 ? (this.correctAttempts / this.totalAttempts) * 100 : 100;
+    this.hud.updateStars(calculateStars(incorrectAccuracy));
 
     // Shake camera gently
     this.cameras.main.shake(200, 0.008);
@@ -487,8 +570,17 @@ export class GameScene extends Phaser.Scene {
   private triggerRemediation(fruit: ActiveFruit): void {
     this.isRemediating = true;
 
+    // Cancel any scheduled wave spawn timer immediately
+    if (this.waveSpawnTimer) {
+      this.waveSpawnTimer.remove();
+      this.waveSpawnTimer = undefined;
+    }
+
     // Dampen fall speed for next items
     this.fallDurationMs = Math.min(8000, this.fallDurationMs + 800);
+
+    const rawItem = curriculumService.getItemById(fruit.question.id);
+    const segmentation = rawItem && 'visualSegmentation' in rawItem ? rawItem.visualSegmentation : undefined;
 
     // Display TeachingCard remediation modal
     new TeachingCard(this, {
@@ -496,11 +588,12 @@ export class GameScene extends Phaser.Scene {
       pattern: fruit.question.subTopic,
       explanation: fruit.question.explanation ?? `Remember: look for the '${fruit.question.subTopic}' pattern!`,
       ruleTitle: `Let's Review: ${fruit.question.subTopic}`,
+      segmentation,
       topic: this.topic,
-      autoSpeak: false,
+      autoSpeak: audioService.isTtsEnabled(),
       onResume: () => {
         this.isRemediating = false;
-        this.time.delayedCall(400, () => {
+        this.waveSpawnTimer = this.time.delayedCall(400, () => {
           this.spawnNextQuestionWave();
         });
       }
@@ -675,11 +768,11 @@ export class GameScene extends Phaser.Scene {
       this.levelNumber,
       accuracy,
       this.score,
-      this.totalAttempts
+      Math.max(1, this.totalAttempts)
     );
 
     const stars = result.stars;
-    const isMastered = accuracy >= 85 || result.unlockedNextLevel;
+    const isMastered = isMasteryAchieved(accuracy, this.totalAttempts) || result.unlockedNextLevel;
 
     // Bonus coins for round completion, mastery, and 3-stars
     let bonusCoins = 50;

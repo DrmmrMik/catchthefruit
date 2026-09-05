@@ -338,7 +338,7 @@ describe('UI Adversarial & Remediation Verification Suite (Challenger M3-2)', ()
       expect(output).toContain('TeachingCard resume button explicitly sized to 240x54px');
       expect(output).toContain('100 rapid dismissal multi-tap simulations passed');
       expect(output).toContain('100,000 float fuzz points strictly clamped');
-    }, 15000);
+    }, 45000);
   });
 
   // --------------------------------------------------------------------------

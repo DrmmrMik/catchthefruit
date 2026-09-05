@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 /home/gallabot/Documents/antigravity/joyful-hertz
+
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > 1 mistake -> consecutiveMistakes = 1 and NO remediation trigger 6ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > 2 mistakes -> consecutiveMistakes = 2 and NO remediation trigger 2ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > 3 mistakes -> consecutiveMistakes = 3 and TRIGGERS remediation 5ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > dampens fall speed duration on remediation (+800ms, clamped to 8000ms max) 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > cancels waveSpawnTimer and prevents concurrent waves during remediation state 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > resets consecutiveMistakes = 0 upon correct catch 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 1. Consecutive Mistakes Streak & Remediation Triggering > resets consecutiveMistakes = 0 upon TeachingCard dismissal 3ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 2. Mastery Gate Strict Boundaries (>85.0% AND >=10 attempts) > 85.0% on 10 attempts -> LOCKED (false) 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 2. Mastery Gate Strict Boundaries (>85.0% AND >=10 attempts) > 85.0001% on 10 attempts -> UNLOCKED (true) 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 2. Mastery Gate Strict Boundaries (>85.0% AND >=10 attempts) > 100.0% on 9 attempts -> LOCKED (false) 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 2. Mastery Gate Strict Boundaries (>85.0% AND >=10 attempts) > 100.0% on 10 attempts -> UNLOCKED (true) 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 2. Mastery Gate Strict Boundaries (>85.0% AND >=10 attempts) > evaluates star rating precision boundaries 1ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 3. Visual Morphological Segmentation & Wiring > curriculumService.getItemById returns valid visualSegmentation for all morphology items 15ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 3. Visual Morphological Segmentation & Wiring > forwards visualSegmentation to TeachingCard modal 2ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 3. Visual Morphological Segmentation & Wiring > leaves segmentation undefined for non-morphology items in TeachingCard 2ms
+ ✓ tests/gameplay_adversarial.test.ts > Challenger M4-2: Pedagogical Game Loop & Remediation State Machine Oracle > 3. Visual Morphological Segmentation & Wiring > formats correct morphological toast message with sparkle indicator 1ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  12:01:25
+   Duration  7.31s (transform 4.57s, setup 36ms, import 6.41s, tests 48ms, environment 605ms)
+

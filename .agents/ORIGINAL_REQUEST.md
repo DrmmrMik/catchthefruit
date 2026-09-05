@@ -65,3 +65,59 @@ Reference: SPEC.md and STACK.md in working directory.
 
 ### Deployment & Live Access
 - [ ] Built assets successfully deployed and live base URL returns HTTP 200 upon live probe.
+
+## 2026-09-05T15:36:22Z
+
+Rebuild "Catch the Fruit" from scratch as an educational 2D arcade Progressive Web App using the latest build standards (2d-game-arcade with pixel-art-character-pipeline), running all visual assets through the 16-bit retro pixel art pipeline and packing them into a unified texture atlas.
+
+Working directory: /home/gallabot/Documents/antigravity/joyful-hertz
+Integrity mode: development
+
+## Requirements
+
+### R1. 16-Bit Pixel Art Asset Toolchain & Atlas Packing
+- Author or reprocess all visual assets (player character animations, falling fruits, catcher basket, orchard growth stages, and UI icons) using the existing toolchain in `~/Documents/pixel-art-pipeline/`.
+- Execute the full pipeline stages: background removal (`remove-background.py`), 16-color locked palette quantization (`quantize.py` with `palette.json`), and nearest-neighbor downsampling (`downsample.py`).
+- Strictly apply `--anim-lock` for all multi-frame animation cycles (anticipation, action, follow-through, recovery, hold) to preserve bounding box and ground planes without jitter, and reserve `--auto-center` exclusively for single static items.
+- Pack all processed frames into a single power-of-two texture atlas (`atlas.png` + `atlas.json`) with extrusion padding.
+
+### R2. Phaser 2D Arcade Engine & Mechanics
+- Build the core game loop in Phaser with fixed-timestep physics ensuring identical fall mechanics across 60Hz and 120Hz displays.
+- All interactive falling fruits must provide touch target hitboxes of at least 48px diameter with no swipe requirements.
+- Strictly adhere to STACK rules: forbidden raw RAF loops, forbidden DOM sprites, and forbidden unbatched image loads (everything renders through the packed atlas).
+- Provide dynamic visual feedback: particle chimes on correct catch, gentle remedial pause on mistake, and an orchard growth visualization.
+
+### R3. ELA Curriculum & Pedagogical Engine
+- Support Grade 2 PA Core Standards across three domains:
+  1. Topic A (Phonics): Vowel teams (ai, ay, ea split /ē/ vs /ĕ/, ee, ie, oa, oe, ui, ue) and r-controlled vowels (ar, er, ir, or, ur), minimum 40 words.
+  2. Topic B (Morphology): Common prefixes (re-, un-, dis-, pre-) and suffixes (-s/-es, -ed, -ing, -er, -est, -ful, -less, -ly) across 30+ base words with visual base + affix segmentation on correct catch.
+  3. Topic C (Vocabulary): 40+ synonym/antonym pairs in contextual sentences.
+- Store all curriculum data in external JSON files validated with runtime Zod schemas.
+- Implement scaffolded progression with mastery gates (>=85% over 10+ attempts) and remediation (3 consecutive mistakes triggers reduced speed and rule review card).
+
+### R4. Audio Synthesis & Offline PWA Standards
+- Implement synthesized audio via Web Audio API (ascending catch chimes, gentle miss tones) with mobile touch gesture audio unlocking.
+- Spoken voice prompts using Web Speech API TTS for auditory instructions.
+- Offline-first PWA built with Vite and Workbox with individual asset precaching (no bare `cache.addAll`).
+- Web App Manifest compliant with modern mobile standards (192px and 512px maskable icons, standalone display mode).
+- Purely local persistence using IndexedDB storing stars, level unlocks, and error tracking without external accounts.
+
+## Acceptance Criteria
+
+### Stack & Asset Pipeline
+- [ ] `~/.build-standards/bin/bsa verify /home/gallabot/Documents/antigravity/joyful-hertz` passes with `2d-game-arcade` and `pixel-art-character-pipeline`.
+- [ ] All sprite frames strictly map to the locked 16-color palette with zero color bleeding.
+- [ ] Multi-frame animation sequences use `--anim-lock` downsampling with zero per-frame bounding jitter.
+- [ ] All game visuals load via a single packed texture atlas with 0 unbatched individual sprite requests.
+
+### Gameplay & Curriculum
+- [ ] Phaser game loop maintains fixed delta-time physics at 60Hz and 120Hz.
+- [ ] All falling fruit hitboxes are >= 48px diameter.
+- [ ] All external curriculum JSON passes strict runtime Zod validation with 0 errors.
+- [ ] Level progression correctly enforces the >=85% mastery requirement.
+- [ ] 3 consecutive incorrect catches trigger the speed dampener and remediation card.
+
+### PWA & Offline Verification
+- [ ] App functions fully offline with all assets and curriculum data precached.
+- [ ] Local persistence persists player progress and stars across page reloads.
+- [ ] Automated test suite (`npm test`) and adversarial verification scripts pass with 0 failures.

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-05T21:50:00Z",
+  "title": "Design System: Catch the Fruit",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Arcade Sky Blue", "canonical": "#0284c7", "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#0284c7", "#38bdf8", "#7dd3fc", "#bae6fd", "#f0f9ff"] },
+      "action": { "role": "secondary", "displayName": "Success Emerald", "canonical": "#16a34a", "tonalRamp": ["#052e16", "#14532d", "#15803d", "#16a34a", "#22c55e", "#4ade80", "#86efac", "#f0fdf4"] },
+      "morphology": { "role": "tertiary", "displayName": "Morphology Amber", "canonical": "#d97706", "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fef3c7"] },
+      "vocabulary": { "role": "tertiary", "displayName": "Vocabulary Violet", "canonical": "#7c3aed", "tonalRamp": ["#2e1065", "#4c1d95", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#f5f3ff"] },
+      "neutral-dark": { "role": "neutral", "displayName": "Slate Text Dark", "canonical": "#0f172a", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#f8fafc"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Round titles, victory celebrations, and primary word cards." },
+      "headline": { "displayName": "Headline", "purpose": "Level introduction titles and teaching card headers." },
+      "title": { "displayName": "Title", "purpose": "HUD prompt banners and morphological segmentation equations." },
+      "body": { "displayName": "Body", "purpose": "Rule explanations and contextual vocabulary sentences." },
+      "label": { "displayName": "Label", "purpose": "Button labels, score chips, and combo streaks." }
+    },
+    "shadows": [
+      { "name": "retro-bevel-sm", "value": "0 2px 0 #0369a1", "purpose": "Crisp 16-bit bevel on primary buttons and badges." },
+      { "name": "retro-bevel-lg", "value": "0 4px 0 #000000", "purpose": "Drop shadow on modals and prompt boxes." }
+    ],
+    "motion": [
+      { "name": "ease-out-back", "value": "cubic-bezier(0.175, 0.885, 0.32, 1.275)", "purpose": "Pop-in animation for cards and celebration stars." }
+    ],
+    "breakpoints": [
+      { "name": "portrait", "value": "480px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Large emerald green button for proceeding to the next level or resuming after remediation.",
+      "html": "<button class=\"ds-btn-primary\">KEEP PLAYING!</button>",
+      "css": ".ds-btn-primary { background: #16a34a; color: #ffffff; border: 2px solid #15803d; border-radius: 16px; min-width: 220px; height: 56px; font-family: 'Lexend', system-ui, sans-serif; font-size: 18px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 #14532d; transition: transform 0.1s, box-shadow 0.1s; } .ds-btn-primary:hover { background: #22c55e; } .ds-btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 #14532d; }"
+    },
+    {
+      "name": "HUD Target Prompt Banner",
+      "kind": "custom",
+      "refersTo": "prompt-banner",
+      "description": "Top-anchored prompt container displaying the active target word or phoneme.",
+      "html": "<div class=\"ds-prompt-banner\"><span class=\"ds-prompt-badge\">CATCH</span><span class=\"ds-prompt-word\">beach</span><span class=\"ds-prompt-sub\">(/ē/ sound)</span></div>",
+      "css": ".ds-prompt-banner { background: #ffffff; border: 3px solid #0284c7; border-radius: 16px; padding: 8px 16px; display: inline-flex; align-items: center; gap: 8px; font-family: 'Lexend', system-ui, sans-serif; box-shadow: 0 3px 0 #0369a1; } .ds-prompt-badge { background: #e0f2fe; color: #0284c7; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 8px; } .ds-prompt-word { font-size: 20px; font-weight: 700; color: #0f172a; } .ds-prompt-sub { font-size: 14px; font-weight: 500; color: #64748b; }"
+    },
+    {
+      "name": "Teaching Remediation Card",
+      "kind": "card",
+      "refersTo": "card-modal",
+      "description": "High-readability modal dialog appearing after 3 consecutive errors with visual morpheme breakdown.",
+      "html": "<div class=\"ds-card-modal\"><div class=\"ds-badge\">LET'S LEARN!</div><div class=\"ds-word\">replay</div><div class=\"ds-eq\">re + play → replay</div><p class=\"ds-expl\">The prefix 're-' means to do something again.</p></div>",
+      "css": ".ds-card-modal { background: #ffffff; border: 3px solid #0284c7; border-radius: 20px; padding: 24px; max-width: 380px; text-align: center; font-family: 'Lexend', system-ui, sans-serif; box-shadow: 0 8px 0 rgba(7,27,46,0.25); } .ds-badge { background: #0284c7; color: #ffffff; font-size: 14px; font-weight: 800; padding: 4px 12px; border-radius: 999px; display: inline-block; margin-bottom: 12px; } .ds-word { font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 8px; } .ds-eq { background: #fef3c7; border: 2px solid #f59e0b; color: #b45309; font-size: 18px; font-weight: 700; padding: 6px 12px; border-radius: 12px; margin-bottom: 12px; } .ds-expl { font-size: 16px; color: #334155; line-height: 1.4; margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Pixel Orchard Classroom",
+    "overview": "Catch the Fruit fuses high-energy 16-bit arcade aesthetics with clean, distraction-free educational readability. Designed specifically for emerging elementary readers (Grade 2), the visual world prioritizes instantaneous legibility, crisp retro tactile feedback, and gentle positive reinforcement.",
+    "keyCharacteristics": [
+      "High-Readability 16-Bit Pixel Art: Retro orchard sprites and character animations rendered with nearest-neighbor clarity.",
+      "Cognitive Clarity: Distraction-free modal layouts, color-coded morpheme breakdowns, and WCAG AAA compliance.",
+      "Tactile Touch-First Controls: Generous hitboxes (>=48px) optimized for small fingers and portrait mobile screens."
+    ],
+    "rules": [
+      { "name": "The Color-Code Rule", "body": "Phonics uses sky blue (#0284c7), Morphology uses amber (#d97706), and Vocabulary uses violet (#7c3aed). These color identities remain strictly consistent across intros, prompts, and remediation cards.", "section": "colors" },
+      { "name": "The No-Flicker Rule", "body": "All in-game sprites strictly snap to the locked palette with 1-bit alpha borders, completely eliminating color bleeding, halo artifacts, and unquantized drift.", "section": "colors" },
+      { "name": "The Dyslexia-Friendly Rule", "body": "All in-game text must use Lexend with minimum 16px size for body explanations and 20px+ for targets. All caps is restricted strictly to short 1-2 word UI labels.", "section": "typography" },
+      { "name": "The Crisp Bevel Rule", "body": "UI cards and buttons do not use blurry CSS box-shadows. Depth is conveyed purely through high-contrast boundary strokes and crisp offset fills.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do maintain touch target hitboxes of at least 48px on all interactive elements.",
+      "Do ensure all text maintains >= 7:1 contrast against card backgrounds for WCAG AAA compliance.",
+      "Do render all sprite visuals through the single packed texture atlas.",
+      "Do use fixed-timestep physics scaling so falling speeds are identical on 60Hz and 120Hz devices."
+    ],
+    "donts": [
+      "Don't use diffuse blurred shadows or antialiased gradients on retro pixel art sprites.",
+      "Don't introduce raw requestAnimationFrame loops or unbatched individual image fetches.",
+      "Don't penalize students with harsh buzzers, red failure flashes, or lives counters; use gentle remedial card pauses.",
+      "Don't require horizontal swipe or drag gestures for falling fruits; single tap anywhere on the hitbox catches the fruit."
+    ]
+  }
+}
