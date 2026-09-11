@@ -45,54 +45,29 @@ export class MenuScene extends Phaser.Scene {
       bg.setAlpha(0.28);
     }
 
-    // Header Background
+    // Header Background (2-tier layout with high-contrast backdrop)
     const headerBg = this.add.graphics();
-    headerBg.fillStyle(0x0284c7, 0.95);
-    headerBg.fillRect(0, 0, width, 110);
+    headerBg.fillStyle(0x0c4a6e, 0.95); // Sky 900 for WCAG AAA contrast
+    headerBg.fillRect(0, 0, width, 118);
 
-    // Title text
-    this.add.text(width / 2, 38, '👑 Princess Penelope 🍎', {
-      fontFamily: 'Lexend, sans-serif',
-      fontSize: '24px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-
-    // Subtitle
-    this.add.text(width / 2, 70, 'Princesses Wear Pants • Royal Orchard', {
-      fontFamily: 'Lexend, sans-serif',
-      fontSize: '13px',
-      color: '#bae6fd'
-    }).setOrigin(0.5);
-
-    // Sound toggle button (top right, 48px target)
-    const isMuted = audioService.isMuted();
-    this.soundButton = this.add.image(width - 40, 40, 'atlas', isMuted ? 'btn-sound-off' : 'btn-sound');
-    this.soundButton.setDisplaySize(48, 48);
-    this.soundButton.setInteractive({ useHandCursor: true });
-    this.soundButton.on('pointerdown', () => {
-      const nowMuted = !audioService.isMuted();
-      audioService.setMuted(nowMuted);
-      this.soundButton.setFrame(nowMuted ? 'btn-sound-off' : 'btn-sound');
-    });
-
-    // Orchard View button (top left, 48px target)
-    const orchardBtn = this.add.container(36, 40);
+    // Tier 1: Utility Controls (y=26)
+    // Orchard View button (top left, x=36, y=26, hitbox >= 48px)
+    const orchardBtn = this.add.container(36, 26);
     const orchardIcon = this.add.image(0, 0, 'atlas', 'tree-stage-3');
-    orchardIcon.setDisplaySize(38, 38);
+    orchardIcon.setDisplaySize(40, 40);
     orchardBtn.add(orchardIcon);
-    orchardBtn.setSize(44, 44);
+    orchardBtn.setSize(48, 48);
     orchardBtn.setInteractive({ useHandCursor: true });
     orchardBtn.on('pointerdown', () => {
       audioService.playClick();
       this.scene.start('OrchardScene', { returnTo: 'MenuScene' });
     });
 
-    // Castle & Marketplace button (top bar)
-    const castleBtn = this.add.container(96, 40);
+    // Castle & Marketplace button (top left, x=108, y=26, hitbox >= 48px)
+    const castleBtn = this.add.container(108, 26);
     const castleBg = this.add.graphics();
     castleBg.fillStyle(0xd946ef, 1);
-    castleBg.fillRoundedRect(-34, -16, 68, 32, 16);
+    castleBg.fillRoundedRect(-36, -18, 72, 36, 16);
     const castleLabel = this.add.text(0, 0, '🏰 Shop', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '12px',
@@ -100,17 +75,17 @@ export class MenuScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
     castleBtn.add([castleBg, castleLabel]);
-    castleBtn.setSize(68, 32);
+    castleBtn.setSize(72, 48);
     castleBtn.setInteractive({ useHandCursor: true });
     castleBtn.on('pointerdown', () => {
       audioService.playClick();
       this.scene.start('CastleScene', { returnTo: 'MenuScene' });
     });
 
-    // Coin Badge
-    const coinBadge = this.add.container(width - 110, 40);
+    // Coin Counter Badge (top right, x=360, y=26)
+    const coinBadge = this.add.container(360, 26);
     const cbg = this.add.graphics();
-    cbg.fillStyle(0x0f172a, 0.4);
+    cbg.fillStyle(0x0f172a, 0.5);
     cbg.fillRoundedRect(-36, -16, 72, 32, 16);
     const cIcon = this.add.image(-18, 0, 'atlas', 'coin-gold').setDisplaySize(20, 20);
     const cTxt = this.add.text(-4, 0, '0', {
@@ -121,6 +96,33 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0, 0.5);
     coinBadge.add([cbg, cIcon, cTxt]);
     storageService.getCoins().then(c => cTxt.setText(`${c}`));
+
+    // Sound toggle button (top right, x=436, y=26, hitbox >= 48px)
+    const isMuted = audioService.isMuted();
+    this.soundButton = this.add.image(436, 26, 'atlas', isMuted ? 'btn-sound-off' : 'btn-sound');
+    this.soundButton.setDisplaySize(48, 48);
+    this.soundButton.setInteractive({ useHandCursor: true });
+    this.soundButton.on('pointerdown', () => {
+      const nowMuted = !audioService.isMuted();
+      audioService.setMuted(nowMuted);
+      this.soundButton.setFrame(nowMuted ? 'btn-sound-off' : 'btn-sound');
+    });
+
+    // Tier 2: Branding (y=72-98)
+    // Centered Title text "👑 Princess Penelope 🍎" at x=240, y=76
+    this.add.text(width / 2, 76, '👑 Princess Penelope 🍎', {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '24px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // Centered Subtitle text "Catch the Fruit — Grade 2 Reading" at x=240, y=98
+    this.add.text(width / 2, 98, 'Catch the Fruit — Grade 2 Reading', {
+      fontFamily: 'Lexend, sans-serif',
+      fontSize: '13px',
+      color: '#ffffff'
+    }).setOrigin(0.5);
 
     // Topic Selection Tabs (Horizontal row of 4 pills)
     this.createTopicTabs();
@@ -199,16 +201,14 @@ export class MenuScene extends Phaser.Scene {
       }
       levelCard.add(bg);
 
-      // Left Fruit / Lock Icon
-      const icon = this.add.image(-155, 0, 'atlas', isUnlocked ? (level.levelNumber === 5 ? 'watermelon' : 'apple') : 'card-panel');
-      icon.setDisplaySize(52, 52);
-      if (!isUnlocked) {
-        icon.setAlpha(0.4);
-      }
+      // Left Fruit / Lock Icon (48x48 lock frame from atlas for locked cards)
+      const iconFrame = isUnlocked ? (level.levelNumber === 5 ? 'watermelon' : 'apple') : 'lock';
+      const icon = this.add.image(-155, 0, 'atlas', iconFrame);
+      icon.setDisplaySize(isUnlocked ? 52 : 48, isUnlocked ? 52 : 48);
       levelCard.add(icon);
 
-      // Level Title & Description
-      const titleColor = isUnlocked ? '#0f172a' : '#94a3b8';
+      // Level Title & Description (WCAG AAA contrast >= 7:1)
+      const titleColor = isUnlocked ? '#0f172a' : '#334155';
       const titleText = this.add.text(-110, -26, level.name, {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '15px',
@@ -216,10 +216,11 @@ export class MenuScene extends Phaser.Scene {
         fontStyle: 'bold'
       });
 
+      const descColor = isUnlocked ? '#475569' : '#334155';
       const descText = this.add.text(-110, -3, level.description, {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '12px',
-        color: isUnlocked ? '#475569' : '#94a3b8',
+        color: descColor,
         wordWrap: { width: 230 }
       });
       levelCard.add([titleText, descText]);
@@ -244,7 +245,7 @@ export class MenuScene extends Phaser.Scene {
         const lockText = this.add.text(145, 0, '🔒 Locked', {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '12px',
-          color: '#94a3b8'
+          color: '#334155'
         }).setOrigin(0.5);
         levelCard.add(lockText);
       }
@@ -265,11 +266,13 @@ export class MenuScene extends Phaser.Scene {
       this.levelButtonsContainer.add(levelCard);
     }
 
-    // Bottom "Visit My Tree Orchard" button
+    // Bottom "Visit My Tree Orchard" button (hitbox >= 48px, WCAG AAA contrast >= 7:1)
     const orchardBottomBtn = this.add.container(width / 2, 750);
     const bottomBg = this.add.graphics();
-    bottomBg.fillStyle(0x10b981, 1);
+    bottomBg.fillStyle(0x065f46, 1); // Emerald 800 for WCAG AAA contrast (>= 7:1)
+    bottomBg.lineStyle(2, 0x047857, 1);
     bottomBg.fillRoundedRect(-165, -24, 330, 48, 24);
+    bottomBg.strokeRoundedRect(-165, -24, 330, 48, 24);
     const bottomText = this.add.text(0, 0, '👑 Penelope\'s Enchanted Orchard 🌳', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',

@@ -208,7 +208,7 @@ export class OrchardView extends Phaser.GameObjects.Container {
 
   private renderTabsVisual(): void {
     const tabWidth = 105;
-    const tabHeight = 44;
+    const tabHeight = 48; // Hitbox >= 48px
 
     this.topicTabContainers.forEach((container, topicId) => {
       const bg = container.getAt(0) as Phaser.GameObjects.Graphics;
@@ -220,13 +220,13 @@ export class OrchardView extends Phaser.GameObjects.Container {
       const h = tabHeight;
 
       if (isActive) {
-        bg.fillStyle(0x0284c7, 1.0); // Active Sky 600
+        bg.fillStyle(0x075985, 1.0); // Active Sky 800 (WCAG AAA >= 7:1)
         bg.lineStyle(2, 0x0369a1, 1.0);
         label.setColor('#ffffff');
       } else {
         bg.fillStyle(0xffffff, 0.9); // Inactive white
         bg.lineStyle(1.5, 0x94a3b8, 1.0);
-        label.setColor('#334155');
+        label.setColor('#1e293b'); // Inactive Slate 800 (WCAG AAA >= 7:1)
       }
 
       bg.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
@@ -321,7 +321,7 @@ export class OrchardView extends Phaser.GameObjects.Container {
       card.add(bg);
 
       // Level Title Text in Lexend font
-      const titleColor = isUnlocked ? '#0369a1' : '#64748b';
+      const titleColor = isUnlocked ? '#0369a1' : '#334155'; // Slate 700 for locked (WCAG AAA >= 7:1)
       const title = scene.add.text(-cardWidth / 2 + 20, -18, lvl.name, {
         fontFamily: 'Lexend, system-ui, sans-serif',
         fontSize: '18px',
@@ -330,7 +330,7 @@ export class OrchardView extends Phaser.GameObjects.Container {
       card.add(title);
 
       // Subtitle / rule description
-      const subColor = isUnlocked ? '#475569' : '#94a3b8';
+      const subColor = isUnlocked ? '#475569' : '#334155'; // Slate 700 for locked (WCAG AAA >= 7:1)
       const subtitle = scene.add.text(-cardWidth / 2 + 20, 8, lvl.subtitle, {
         fontFamily: 'Lexend, system-ui, sans-serif',
         fontSize: '13px',
@@ -364,7 +364,7 @@ export class OrchardView extends Phaser.GameObjects.Container {
         const lockText = scene.add.text(cardWidth / 2 - 50, 0, '🔒 Locked', {
           fontFamily: 'Lexend, system-ui, sans-serif',
           fontSize: '14px',
-          color: '#94a3b8'
+          color: '#334155' // Slate 700 (WCAG AAA >= 7:1)
         });
         lockText.setOrigin(0.5, 0.5);
         card.add(lockText);

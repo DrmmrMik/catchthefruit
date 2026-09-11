@@ -52,14 +52,25 @@ export class PreloadScene extends Phaser.Scene {
       loadingText.setText('Tap Anywhere to Enter Kingdom!');
     });
 
-    // Load packed texture atlas and magical background images
+    // Load packed texture atlas (zero unbatched image requests)
     this.load.atlas('atlas', 'assets/atlas.png', 'assets/atlas.json');
-    this.load.image('background', 'assets/background.jpg');
-    this.load.image('castle-exterior', 'assets/castle_exterior.jpg');
-    this.load.image('castle-interior', 'assets/castle_interior.jpg');
   }
 
   create(): void {
+    // Instantiate standalone textures in Phaser's TextureManager for backdrops from atlas frames
+    // so that add.image(..., 'background') and setTexture('castle-exterior') continue to work with 0 HTTP requests
+    const atlas = this.textures.get('atlas');
+    ['background', 'castle-exterior', 'castle-interior'].forEach(frameName => {
+      if (atlas.has(frameName) && !this.textures.exists(frameName)) {
+        const frame = atlas.get(frameName);
+        const canvasTex = this.textures.createCanvas(frameName, frame.width, frame.height);
+        if (canvasTex) {
+          canvasTex.drawFrame('atlas', frameName, 0, 0);
+          canvasTex.refresh();
+        }
+      }
+    });
+
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 

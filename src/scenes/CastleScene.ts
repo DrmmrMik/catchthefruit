@@ -91,13 +91,17 @@ export class CastleScene extends Phaser.Scene {
     headerBg.fillStyle(0x0f172a, 0.45);
     headerBg.fillRect(0, 0, width, 60);
 
-    // Back Button
-    const backBtn = this.add.text(18, 16, '◀ Back', {
+    // Back Button (hitbox >= 48px)
+    const backBtn = this.add.container(54, 30).setDepth(11);
+    const backLabel = this.add.text(0, 0, '◀ Back', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '15px',
       color: '#ffffff',
       fontStyle: 'bold'
-    }).setDepth(11).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5);
+    backBtn.add(backLabel);
+    backBtn.setSize(88, 48);
+    backBtn.setInteractive({ useHandCursor: true });
 
     backBtn.on('pointerdown', () => {
       audioService.playClick();
@@ -143,7 +147,7 @@ export class CastleScene extends Phaser.Scene {
   private createTabButton(x: number, y: number, text: string, isActive: boolean, onClick: () => void): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
 
-    const bg = this.add.rectangle(0, 0, 190, 36, isActive ? 0x0284c7 : 0x0f172a, isActive ? 0.95 : 0.65)
+    const bg = this.add.rectangle(0, 0, 190, 48, isActive ? 0x075985 : 0x0f172a, isActive ? 0.95 : 0.65)
       .setStrokeStyle(isActive ? 2 : 1, isActive ? 0x38bdf8 : 0x94a3b8)
       .setInteractive({ useHandCursor: true });
 
@@ -160,6 +164,7 @@ export class CastleScene extends Phaser.Scene {
     });
 
     container.add([bg, label]);
+    container.setSize(190, 48);
     return container;
   }
 
@@ -227,7 +232,8 @@ export class CastleScene extends Phaser.Scene {
 
         container.add([sprite, nameBadge]);
 
-        // Clicking occupied slot gives option to swap or remove
+        // Clicking occupied slot gives option to swap or remove (hitbox >= 48px)
+        container.setSize(targetSize, targetSize + 24);
         container.setInteractive(
           new Phaser.Geom.Rectangle(-targetSize / 2, -targetSize / 2, targetSize, targetSize + 24),
           Phaser.Geom.Rectangle.Contains
@@ -255,14 +261,14 @@ export class CastleScene extends Phaser.Scene {
         const plusText = this.add.text(0, -4, '+', {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '22px',
-          color: '#0284c7',
+          color: '#075985', // Sky 800 (WCAG AAA >= 7:1)
           fontStyle: 'bold'
         }).setOrigin(0.5);
 
         const slotLabel = this.add.text(0, 14, 'Place', {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '11px',
-          color: '#0369a1',
+          color: '#0c4a6e', // Sky 900 (WCAG AAA >= 7:1)
           fontStyle: 'bold'
         }).setOrigin(0.5);
 
@@ -278,6 +284,8 @@ export class CastleScene extends Phaser.Scene {
           ease: 'Sine.easeInOut'
         });
 
+        // Hitbox >= 48px
+        container.setSize(90, 50);
         container.setInteractive(
           new Phaser.Geom.Rectangle(-45, -25, 90, 50),
           Phaser.Geom.Rectangle.Contains
@@ -394,10 +402,10 @@ export class CastleScene extends Phaser.Scene {
     const marketBtn = this.add.container(width / 2, height - 36).setDepth(15);
 
     const bg = this.add.graphics();
-    bg.fillStyle(0xd946ef, 1);
-    bg.lineStyle(2, 0xfdf4ff, 0.9);
-    bg.fillRoundedRect(-140, -22, 280, 44, 22);
-    bg.strokeRoundedRect(-140, -22, 280, 44, 22);
+    bg.fillStyle(0x5b21b6, 1); // Violet 800 (WCAG AAA contrast >= 7:1)
+    bg.lineStyle(2, 0x7c3aed, 0.9);
+    bg.fillRoundedRect(-140, -24, 280, 48, 24);
+    bg.strokeRoundedRect(-140, -24, 280, 48, 24);
 
     const icon = this.add.text(-105, 0, '🛍️', { fontSize: '20px' }).setOrigin(0.5);
     const label = this.add.text(10, 0, 'ROYAL MARKETPLACE', {
@@ -408,7 +416,7 @@ export class CastleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     marketBtn.add([bg, icon, label]);
-    marketBtn.setSize(280, 44);
+    marketBtn.setSize(280, 48);
     marketBtn.setInteractive({ useHandCursor: true });
     marketBtn.on('pointerdown', () => {
       audioService.playClick();
@@ -435,18 +443,18 @@ export class CastleScene extends Phaser.Scene {
     const bg = this.add.graphics();
     bg.fillStyle(0xf1f5f9, 1);
     bg.lineStyle(1.5, 0x94a3b8, 1);
-    bg.fillCircle(0, 0, 18);
-    bg.strokeCircle(0, 0, 18);
+    bg.fillCircle(0, 0, 24); // 48px diameter
+    bg.strokeCircle(0, 0, 24);
 
     const icon = this.add.text(0, 0, '✕', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '18px',
-      color: '#475569',
+      color: '#1e293b', // Slate 800 (WCAG AAA contrast >= 7:1)
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
     btn.add([bg, icon]);
-    btn.setSize(44, 44);
+    btn.setSize(48, 48);
     btn.setInteractive({ useHandCursor: true });
     btn.on('pointerover', () => btn.setScale(1.08));
     btn.on('pointerout', () => btn.setScale(1.0));
@@ -500,15 +508,15 @@ export class CastleScene extends Phaser.Scene {
       const emptyText = this.add.text(width / 2, height / 2 - 20, "You haven't bought any decorations\nfor this area yet!", {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '15px',
-        color: '#64748b',
+        color: '#334155', // Slate 700 (WCAG AAA >= 7:1)
         align: 'center',
         lineSpacing: 8
       }).setOrigin(0.5);
 
       const shopBtn = this.add.container(width / 2, height / 2 + 50);
       const sbg = this.add.graphics();
-      sbg.fillStyle(0xd946ef, 1);
-      sbg.fillRoundedRect(-110, -22, 220, 44, 16);
+      sbg.fillStyle(0x5b21b6, 1); // Violet 800 (WCAG AAA >= 7:1)
+      sbg.fillRoundedRect(-110, -24, 220, 48, 16);
       const slbl = this.add.text(0, 0, '🛍️ Visit Marketplace', {
         fontFamily: 'Lexend, sans-serif',
         fontSize: '14px',
@@ -516,7 +524,7 @@ export class CastleScene extends Phaser.Scene {
         fontStyle: 'bold'
       }).setOrigin(0.5);
       shopBtn.add([sbg, slbl]);
-      shopBtn.setSize(220, 44);
+      shopBtn.setSize(220, 48);
       shopBtn.setInteractive({ useHandCursor: true });
       shopBtn.on('pointerover', () => shopBtn.setScale(1.03));
       shopBtn.on('pointerout', () => shopBtn.setScale(1.0));
@@ -549,8 +557,8 @@ export class CastleScene extends Phaser.Scene {
 
         const placeBtn = this.add.container(135, 0);
         const pbg = this.add.graphics();
-        pbg.fillStyle(0x10b981, 1);
-        pbg.fillRoundedRect(-48, -18, 96, 36, 14);
+        pbg.fillStyle(0x065f46, 1); // Emerald 800 (WCAG AAA >= 7:1)
+        pbg.fillRoundedRect(-48, -24, 96, 48, 14);
         const plbl = this.add.text(0, 0, 'Place', {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '13px',
@@ -558,7 +566,7 @@ export class CastleScene extends Phaser.Scene {
           fontStyle: 'bold'
         }).setOrigin(0.5);
         placeBtn.add([pbg, plbl]);
-        placeBtn.setSize(96, 36);
+        placeBtn.setSize(96, 48);
         placeBtn.setInteractive({ useHandCursor: true });
         placeBtn.on('pointerover', () => placeBtn.setScale(1.04));
         placeBtn.on('pointerout', () => placeBtn.setScale(1.0));
@@ -613,11 +621,11 @@ export class CastleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Swap Button
+    // Swap Button (hitbox >= 48px, WCAG AAA >= 7:1)
     const swapBtn = this.add.container(width / 2, (height - modalH) / 2 + 185);
     const sbg = this.add.graphics();
-    sbg.fillStyle(0x0284c7, 1);
-    sbg.fillRoundedRect(-115, -22, 230, 44, 16);
+    sbg.fillStyle(0x075985, 1); // Sky 800 (WCAG AAA >= 7:1)
+    sbg.fillRoundedRect(-115, -24, 230, 48, 16);
     const slbl = this.add.text(0, 0, '🔄 Swap Item', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
@@ -625,7 +633,7 @@ export class CastleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
     swapBtn.add([sbg, slbl]);
-    swapBtn.setSize(230, 44);
+    swapBtn.setSize(230, 48);
     swapBtn.setInteractive({ useHandCursor: true });
     swapBtn.on('pointerover', () => swapBtn.setScale(1.03));
     swapBtn.on('pointerout', () => swapBtn.setScale(1.0));
@@ -634,11 +642,11 @@ export class CastleScene extends Phaser.Scene {
       this.openInventoryPicker(slot);
     });
 
-    // Remove Button
+    // Remove Button (hitbox >= 48px, WCAG AAA >= 7:1)
     const removeBtn = this.add.container(width / 2, (height - modalH) / 2 + 245);
     const rbg = this.add.graphics();
-    rbg.fillStyle(0xef4444, 1);
-    rbg.fillRoundedRect(-115, -22, 230, 44, 16);
+    rbg.fillStyle(0x991b1b, 1); // Red 800 (WCAG AAA >= 7:1)
+    rbg.fillRoundedRect(-115, -24, 230, 48, 16);
     const rlbl = this.add.text(0, 0, '🗑️ Put in Storage', {
       fontFamily: 'Lexend, sans-serif',
       fontSize: '14px',
@@ -646,7 +654,7 @@ export class CastleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
     removeBtn.add([rbg, rlbl]);
-    removeBtn.setSize(230, 44);
+    removeBtn.setSize(230, 48);
     removeBtn.setInteractive({ useHandCursor: true });
     removeBtn.on('pointerover', () => removeBtn.setScale(1.03));
     removeBtn.on('pointerout', () => removeBtn.setScale(1.0));
@@ -714,13 +722,13 @@ export class CastleScene extends Phaser.Scene {
 
     this.modalContainer.add([title, subtitle, closeBtn]);
 
-    // Bottom Return Button
+    // Bottom Return Button (hitbox >= 48px, WCAG AAA >= 7:1)
     const returnBtn = this.add.container(width / 2, modalY + modalH - 34);
     const retBg = this.add.graphics();
-    retBg.fillStyle(0x0284c7, 1); // Sky 600
+    retBg.fillStyle(0x075985, 1); // Sky 800 (WCAG AAA >= 7:1)
     retBg.lineStyle(2, 0x0369a1, 1);
-    retBg.fillRoundedRect(-120, -22, 240, 44, 16);
-    retBg.strokeRoundedRect(-120, -22, 240, 44, 16);
+    retBg.fillRoundedRect(-120, -24, 240, 48, 16);
+    retBg.strokeRoundedRect(-120, -24, 240, 48, 16);
 
     const retText = this.add.text(0, 0, '← Back to Castle', {
       fontFamily: 'Lexend, sans-serif',
@@ -730,7 +738,7 @@ export class CastleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     returnBtn.add([retBg, retText]);
-    returnBtn.setSize(240, 44);
+    returnBtn.setSize(240, 48);
     returnBtn.setInteractive({ useHandCursor: true });
     returnBtn.on('pointerover', () => returnBtn.setScale(1.03));
     returnBtn.on('pointerout', () => returnBtn.setScale(1.0));
@@ -783,25 +791,25 @@ export class CastleScene extends Phaser.Scene {
         const desc = this.add.text(-140, 4, item.description, {
           fontFamily: 'Lexend, sans-serif',
           fontSize: '10px',
-          color: '#64748b',
+          color: '#334155', // Slate 700 (WCAG AAA >= 7:1)
           wordWrap: { width: 220 }
         });
 
-        // Price / Status Button
+        // Price / Status Button (hitbox >= 48px, WCAG AAA >= 7:1)
         const buyBtn = this.add.container(152, 0);
         const bbg = this.add.graphics();
         const btnW = 96;
-        const btnH = 38;
+        const btnH = 48;
         let btnText = '';
 
         if (isOwned) {
-          bbg.fillStyle(0x10b981, 1);
+          bbg.fillStyle(0x065f46, 1); // Emerald 800 (WCAG AAA >= 7:1)
           btnText = 'OWNED ✓';
         } else if (canAfford) {
-          bbg.fillStyle(0xd946ef, 1);
+          bbg.fillStyle(0x5b21b6, 1); // Violet 800 (WCAG AAA >= 7:1)
           btnText = `${item.price} 🪙`;
         } else {
-          bbg.fillStyle(0x94a3b8, 1);
+          bbg.fillStyle(0x475569, 1); // Slate 600 (WCAG AAA >= 7:1)
           btnText = `${item.price} 🪙`;
         }
 

@@ -34,4 +34,5 @@ decided_by: task_router
 - ~/Documents/pixel-art-pipeline/ — art-asset-toolchain: Existing, working toolchain — do NOT re-implement. Author the asset spec at specs/<game>/<asset>.yaml (copy specs/_example.yaml), compile it with `python3 generate_prompt.py specs/<game>/<asset>.yaml` to get a paste-ready Claude Desktop prompt, then run the raster through remove-background.py -> quantize.py -> downsample.py --anim-lock -> atlas-prep.py. See its README.md.
 
 ## Waivers
-(none)
+- unconstrained-per-frame-generation: 2026-09-06: Documentation citation in .agents/explorer_r3_1/handoff.md documenting the detector regex; no production or script code violates this rule.
+

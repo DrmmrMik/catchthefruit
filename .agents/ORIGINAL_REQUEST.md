@@ -121,3 +121,47 @@ Integrity mode: development
 - [ ] App functions fully offline with all assets and curriculum data precached.
 - [ ] Local persistence persists player progress and stars across page reloads.
 - [ ] Automated test suite (`npm test`) and adversarial verification scripts pass with 0 failures.
+
+## 2026-09-06T01:46:48Z
+
+Rebuild and standardize all visual assets in "Catch the Fruit" into authentic 16-bit retro pixel art using the established pixel art pipeline (`~/Documents/pixel-art-pipeline/`), resolve UI layout defects (header overlap, placeholder icons), and ensure complete visual harmony with the project's design system and stack specifications.
+
+Working directory: /home/gallabot/Documents/antigravity/joyful-hertz
+Integrity mode: development
+
+Reference: `STACK.md`, `DESIGN.md`, and `PRODUCT.md` in working directory. Toolchain at `~/Documents/pixel-art-pipeline/`.
+
+## Requirements
+
+### R1. 16-Bit Retro Pixel Art Pipeline & Atlas Packing
+- Author and reprocess all in-game visual assets (falling fruits, catcher basket, orchard growth stages, player character keyframes, and UI icons) through `~/Documents/pixel-art-pipeline/` using 16-color locked palette quantization (`palette.json`), nearest-neighbor downsampling (`downsample.py`), and `--anim-lock` for multi-frame animation sequences to eliminate jitter.
+- Replace high-res CGI/storybook backgrounds with authentic 16-bit retro arcade orchard backdrops complying with the locked palette and no-flicker rules.
+- Pack all processed frames into a unified power-of-two texture atlas (`atlas.png` + `atlas.json`) using extrusion padding with zero unbatched image requests.
+
+### R2. UI Layout & Visual Defect Remediation
+- Fix the header collision in the main menu so the title text, coin counter, and buttons have clean separation without overlap on standard portrait mobile viewports (480px width).
+- Replace the broken `card-panel` rectangular placeholder on locked level selector cards with a proper lock icon or shaded silhouette.
+- Eliminate character foot matte/cutout residue and ensure clean 1-bit alpha borders across all sprites.
+- Ensure all interactive hitboxes remain >= 48px and typography adheres to Lexend with WCAG AAA contrast ratios (>= 7:1).
+
+### R3. Engine & Educational Integrity
+- Preserve all existing Grade 2 ELA curriculum levels, audio synthesis, offline PWA capabilities, and fixed-timestep physics.
+- Maintain full test coverage across all existing Vitest suites and ensure `bsa verify` passes cleanly against `STACK.md`.
+
+## Acceptance Criteria
+
+### Visual & Asset Standards
+- [ ] Every sprite in `atlas.png` strictly adheres to 16-color locked palette quantization with 1-bit alpha borders, nearest-neighbor clarity, and zero antialiased gradients.
+- [ ] Multi-frame character and tree animations maintain ground-plane locking without position jitter across frames.
+- [ ] High-resolution CGI painterly backgrounds are replaced with retro pixel art backgrounds matching the 16-color palette.
+- [ ] `atlas.png` and `atlas.json` pack all game elements with zero unbatched individual image requests.
+
+### UI & Layout Compliance
+- [ ] Main menu top header displays cleanly with zero text or badge overlap across 480px portrait mobile viewports.
+- [ ] Locked level selector cards show clean lock badges or shaded silhouettes rather than distorted outline boxes.
+- [ ] All interactive buttons and falling fruits maintain hitboxes >= 48px.
+
+### Test & Regression Integrity
+- [ ] `npm run test` passes with 100% test pass rate across all test files.
+- [ ] `npm run build` succeeds cleanly with zero TypeScript errors.
+- [ ] `~/.build-standards/bin/bsa verify /home/gallabot/Documents/antigravity/joyful-hertz` passes with 0 errors.
